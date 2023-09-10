@@ -1,0 +1,16 @@
+[workspace]
+members = [
+  "server",
+  "kernel",
+  "driver",
+  "application"
+]
+
+resolver = "2"
+
+[workspace.package]
+license = "GPL-3.0-or-later"
+
+[workspace.dependencies]
+anyhow = "1"
+thiserror = "1"

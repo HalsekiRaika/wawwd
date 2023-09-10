@@ -1,0 +1,13 @@
+use async_trait::async_trait;
+use orbital::export_service;
+use crate::entities::location::{Location, LocationId};
+use crate::error::KernelError;
+
+#[async_trait]
+#[export_service]
+pub trait LocationRepository: 'static + Send + Sync {
+    async fn create(&self, create: &Location) -> Result<(), KernelError>;
+    async fn update(&self, update: &Location) -> Result<(), KernelError>;
+    async fn delete(&self, delete: &LocationId) -> Result<(), KernelError>;
+    async fn find_by_id(&self, id: &LocationId) -> Result<Option<Location>, KernelError>;
+}
