@@ -1,4 +1,5 @@
 use destructure::Destructure;
+use geo_types::Point;
 use serde::{Deserialize, Serialize};
 use crate::error::KernelError;
 
@@ -21,6 +22,30 @@ impl Position {
 
     pub fn y(&self) -> &Latitude {
         &self.y
+    }
+}
+
+
+impl From<Position> for geo_types::Geometry {
+    fn from(value: Position) -> Self {
+        Self::Point(Point::new(value.x.into(), value.y.into()))
+    }
+}
+
+impl TryFrom<geo_types::Geometry> for Position {
+    type Error = KernelError;
+
+    fn try_from(value: geo_types::Geometry) -> Result<Self, Self::Error> {
+        match value {
+            geo_types::Geometry::Point(point) => {
+                let (x, y) = point.x_y();
+                Ok(Self::new(x, y)?)
+            }
+            _ => Err(KernelError::UnSupportedTypeConversion {
+                from: "with the exception of Geometry::Point",
+                to: "kernel::entities::geometry::Position"
+            })
+        }
     }
 }
 
