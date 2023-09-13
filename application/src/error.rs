@@ -17,8 +17,10 @@ pub enum ApplicationError {
 impl From<KernelError> for ApplicationError {
     fn from(value: KernelError) -> Self {
         match value {
-            KernelError::Validation { msg } => Self::Kernel(anyhow::Error::msg(msg)),
-            KernelError::Driver(e) => Self::Other(e)
+            KernelError::Validation { .. } => Self::Kernel(anyhow::Error::new(value)),
+            KernelError::UnSupportedTypeConversion { .. } => Self::Kernel(anyhow::Error::new(value)),
+            KernelError::Driver(e) => Self::Other(e),
+            KernelError::Internal(e) => Self::Other(e),
         }
     }
 }
