@@ -6,7 +6,11 @@ pub mod error;
 #[cfg(feature = "uuid")]
 pub mod external {
     #[cfg(feature = "time")]
-    pub use time::*;
+    pub mod time {
+        pub use time::*;
+    }
     #[cfg(feature = "uuid")]
-    pub use uuid::*;
+    pub mod uuid {
+        pub use uuid::*;
+    }
 }

@@ -1,6 +1,6 @@
 use kernel::entities::geology::DestructPosition;
 use kernel::entities::location::{DestructLocation, Location};
-use kernel::external::Uuid;
+use kernel::external::uuid::Uuid;
 
 #[derive(Debug)]
 pub struct LocationDto {
