@@ -1,5 +1,3 @@
 mod location;
 
-pub use self::{
-    location::*
-};
+pub use self::location::*;

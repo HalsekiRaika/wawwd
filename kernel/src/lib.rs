@@ -1,6 +1,6 @@
 pub mod entities;
-pub mod repository;
 pub mod error;
+pub mod repository;
 
 #[cfg(feature = "time")]
 #[cfg(feature = "uuid")]

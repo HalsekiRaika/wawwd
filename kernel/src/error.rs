@@ -5,10 +5,10 @@ pub enum KernelError {
     #[error("Unsupported type conversion. from: {from} -> to: {to}")]
     UnSupportedTypeConversion {
         from: &'static str,
-        to: &'static str
+        to: &'static str,
     },
     #[error(transparent)]
     Driver(anyhow::Error),
     #[error(transparent)]
-    Internal(anyhow::Error)
+    Internal(anyhow::Error),
 }
