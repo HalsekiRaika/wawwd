@@ -8,17 +8,19 @@ pub enum ApplicationError {
     NotFound {
         entity: &'static str,
         method: &'static str,
-        target: String
+        target: String,
     },
     #[error(transparent)]
-    Other(anyhow::Error)
+    Other(anyhow::Error),
 }
 
 impl From<KernelError> for ApplicationError {
     fn from(value: KernelError) -> Self {
         match value {
             KernelError::Validation { .. } => Self::Kernel(anyhow::Error::new(value)),
-            KernelError::UnSupportedTypeConversion { .. } => Self::Kernel(anyhow::Error::new(value)),
+            KernelError::UnSupportedTypeConversion { .. } => {
+                Self::Kernel(anyhow::Error::new(value))
+            }
             KernelError::Driver(e) => Self::Other(e),
             KernelError::Internal(e) => Self::Other(e),
         }
