@@ -1,7 +1,7 @@
+use crate::error::KernelError;
 use destructure::Destructure;
 use geo_types::Point;
 use serde::{Deserialize, Serialize};
-use crate::error::KernelError;
 
 use super::{Latitude, Longitude};
 
@@ -12,8 +12,14 @@ pub struct Position {
 }
 
 impl Position {
-    pub fn new(longitude: impl Into<f64>, latitude: impl Into<f64>) -> Result<Position, KernelError> {
-        Ok(Self { x: Longitude::new(longitude)?, y: Latitude::new(latitude)?, })
+    pub fn new(
+        longitude: impl Into<f64>,
+        latitude: impl Into<f64>,
+    ) -> Result<Position, KernelError> {
+        Ok(Self {
+            x: Longitude::new(longitude)?,
+            y: Latitude::new(latitude)?,
+        })
     }
 
     pub fn x(&self) -> &Longitude {
@@ -24,7 +30,6 @@ impl Position {
         &self.y
     }
 }
-
 
 impl From<Position> for geo_types::Geometry {
     fn from(value: Position) -> Self {
@@ -43,8 +48,8 @@ impl TryFrom<geo_types::Geometry> for Position {
             }
             _ => Err(KernelError::UnSupportedTypeConversion {
                 from: "with the exception of Geometry::Point",
-                to: "kernel::entities::geometry::Position"
-            })
+                to: "kernel::entities::geometry::Position",
+            }),
         }
     }
 }

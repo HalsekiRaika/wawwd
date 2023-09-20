@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::error::KernelError;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]
 pub struct Longitude(f64);
@@ -9,8 +9,8 @@ impl Longitude {
         let lon = longitude.into();
         if !(-180f64..=180f64).contains(&lon) {
             return Err(KernelError::Validation {
-                msg: "longitude values are invalid. longitude should takes -90~90 degrees."
-            })
+                msg: "longitude values are invalid. longitude should takes -90~90 degrees.",
+            });
         }
         Ok(Self(lon))
     }

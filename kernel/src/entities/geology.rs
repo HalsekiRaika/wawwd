@@ -1,9 +1,5 @@
-mod position;
-mod longitude;
 mod latitude;
+mod longitude;
+mod position;
 
-pub use self::{
-    position::*,
-    latitude::*,
-    longitude::*,
-};
+pub use self::{latitude::*, longitude::*, position::*};

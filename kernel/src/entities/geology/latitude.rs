@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::error::KernelError;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]
 pub struct Latitude(f64);
@@ -9,8 +9,8 @@ impl Latitude {
         let lat = latitude.into();
         if !(-90f64..=90f64).contains(&lat) {
             return Err(KernelError::Validation {
-                msg: "latitude values are invalid. latitude should takes -90~90 degrees."
-            })
+                msg: "latitude values are invalid. latitude should takes -90~90 degrees.",
+            });
         }
         Ok(Self(lat))
     }
