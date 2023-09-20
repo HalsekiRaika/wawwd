@@ -1,4 +1,4 @@
-mod handler;
 pub mod error;
+mod handler;
+pub mod routes;
 
-pub use self::handler::*;
