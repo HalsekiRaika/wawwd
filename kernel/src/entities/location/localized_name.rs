@@ -1,36 +1,22 @@
-use crate::entities::location::localize_id::LocalizeId;
-use crate::error::KernelError;
-use destructure::Destructure;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Deserialize, Serialize, Destructure)]
-pub struct LocalizedName {
-    country_code: LocalizeId,
-    localize: String,
-}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LocalizeName(String);
 
-impl LocalizedName {
-    pub fn new(
-        country_code: impl Into<String>,
-        localize: impl Into<String>,
-    ) -> Result<LocalizedName, KernelError> {
-        Ok(Self {
-            country_code: LocalizeId::new(country_code)?,
-            localize: localize.into(),
-        })
-    }
-
-    pub fn country(&self) -> &LocalizeId {
-        &self.country_code
-    }
-
-    pub fn localize(&self) -> &str {
-        &self.localize
+impl LocalizeName {
+    pub fn new(localize: impl Into<String>) -> LocalizeName {
+        Self(localize.into())
     }
 }
 
-impl AsRef<LocalizedName> for LocalizedName {
-    fn as_ref(&self) -> &LocalizedName {
-        self
+impl AsRef<str> for LocalizeName {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl From<LocalizeName> for String {
+    fn from(value: LocalizeName) -> Self {
+        value.0
     }
 }
