@@ -1,5 +1,5 @@
 pub mod error;
-mod extensions;
+mod extract;
 mod handler;
 pub mod routes;
 
