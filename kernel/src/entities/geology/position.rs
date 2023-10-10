@@ -1,6 +1,5 @@
 use crate::error::KernelError;
 use destructure::Destructure;
-use geo_types::Point;
 use serde::{Deserialize, Serialize};
 
 use super::{Latitude, Longitude};
@@ -33,7 +32,13 @@ impl Position {
 
 impl From<Position> for geo_types::Geometry {
     fn from(value: Position) -> Self {
-        Self::Point(Point::new(value.x.into(), value.y.into()))
+        Self::Point(geo_types::Point::new(value.x.into(), value.y.into()))
+    }
+}
+
+impl From<Position> for geo_types::Point {
+    fn from(value: Position) -> Self {
+        geo_types::Point::new(value.x.into(), value.y.into())
     }
 }
 
@@ -47,8 +52,29 @@ impl TryFrom<geo_types::Geometry> for Position {
                 Ok(Self::new(x, y)?)
             }
             _ => Err(KernelError::UnSupportedTypeConversion {
-                from: "with the exception of Geometry::Point",
+                from: "with the exception of geo_types::Geometry::Point",
                 to: "kernel::entities::geometry::Position",
+            }),
+        }
+    }
+}
+
+impl From<Position> for geojson::Geometry {
+    fn from(value: Position) -> Self {
+        geojson::Geometry::from(geojson::Value::from(&geo_types::Point::from(value)))
+    }
+}
+
+impl TryFrom<geojson::Geometry> for Position {
+    type Error = KernelError;
+    fn try_from(geometry: geojson::Geometry) -> Result<Self, Self::Error> {
+        use geojson::Value;
+
+        match geometry.value {
+            Value::Point(point) => Ok(Position::new(point[0], point[1])?),
+            _ => Err(KernelError::UnSupportedTypeConversion {
+                from: "with exception of geojson::Value::Point",
+                to: "kernel::geology::Position",
             }),
         }
     }

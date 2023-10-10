@@ -1,5 +1,7 @@
+use crate::error::KernelError;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]
@@ -20,6 +22,32 @@ impl AsRef<Uuid> for LocationId {
 impl From<LocationId> for Uuid {
     fn from(id: LocationId) -> Self {
         id.0
+    }
+}
+
+impl From<LocationId> for String {
+    fn from(value: LocationId) -> Self {
+        value.0.to_string()
+    }
+}
+
+impl From<LocationId> for geojson::feature::Id {
+    fn from(value: LocationId) -> Self {
+        Self::String(value.into())
+    }
+}
+
+impl TryFrom<String> for LocationId {
+    type Error = KernelError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Ok(LocationId::new(Uuid::from_str(value.as_str()).map_err(
+            |e| KernelError::TryConversion {
+                from: "&str",
+                to: "Uuid",
+                source: anyhow::Error::new(e),
+            },
+        )?))
     }
 }
 
