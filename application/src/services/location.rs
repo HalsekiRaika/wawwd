@@ -2,7 +2,7 @@ use crate::error::ApplicationError;
 use crate::transfer::{CreateLocationDto, DeleteLocationDto, LocationDto, UpdateLocationDto};
 use async_trait::async_trait;
 use kernel::entities::geology::Position;
-use kernel::entities::location::{LocalizeId, LocalizedName, Location, LocationId};
+use kernel::entities::location::{Localize, LocalizeId, Location, LocationId};
 use kernel::repository::{DependOnLocationRepository, LocationRepository};
 use orbital::export_service;
 
@@ -20,10 +20,12 @@ pub trait CreateLocationService: 'static + Send + Sync + DependOnLocationReposit
         let pos = Position::new(longitude, latitude)?;
         let loc = localize
             .into_iter()
-            .map(|(c, n)| LocalizedName::new(c, n))
-            .collect::<Result<Vec<LocalizedName>, _>>()?;
+            .map(|(c, n)| Localize::new(c, n))
+            .collect::<Result<Vec<Localize>, _>>()?;
 
         let mark = Location::new(lid, pos, loc);
+
+        println!("{:?}", mark);
 
         self.location_repository().create(&mark).await?;
 
@@ -57,8 +59,8 @@ pub trait UpdateLocationService: 'static + Send + Sync + DependOnLocationReposit
         mark.pos = Position::new(longitude, latitude)?;
         mark.localize = localize
             .into_iter()
-            .map(|(c, n)| LocalizedName::new(c, n))
-            .collect::<Result<Vec<LocalizedName>, _>>()?;
+            .map(|(c, n)| Localize::new(c, n))
+            .collect::<Result<Vec<Localize>, _>>()?;
 
         let mark = mark.freeze();
 

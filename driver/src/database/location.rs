@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use geo_types::Geometry;
 use geozero::wkb::Decode;
 use kernel::entities::geology::Position;
-use kernel::entities::location::{LocalizeId, LocalizedName, Location, LocationId};
+use kernel::entities::location::{Localize, LocalizeId, Location, LocationId};
 use kernel::error::KernelError;
 use kernel::external::uuid::Uuid;
 use kernel::repository::LocationRepository;
@@ -64,7 +64,6 @@ impl LocationRepository for LocationDataBase {
     }
 }
 
-
 #[allow(unused)]
 #[derive(sqlx::FromRow)]
 pub(in crate::database) struct LocationMarkRow {
@@ -115,7 +114,7 @@ impl LocationDataBaseInternal {
         builder.push_values(ctx.localize().iter().take(BIND_LIMIT / 3), |mut b, loc| {
             b.push_bind(ctx.id().as_ref())
                 .push_bind(loc.country().as_ref())
-                .push_bind(loc.localize());
+                .push_bind(loc.localize().as_ref());
         });
 
         builder.build().execute(&mut *con).await?;
@@ -153,7 +152,7 @@ impl LocationDataBaseInternal {
         query.push_values(ctx.localize().iter().take(BIND_LIMIT / 3), |mut b, loc| {
             b.push_bind(ctx.id().as_ref())
                 .push_bind(loc.country().as_ref())
-                .push_bind(loc.localize());
+                .push_bind(loc.localize().as_ref());
         });
 
         query.push(
@@ -203,23 +202,34 @@ impl LocationDataBaseInternal {
         Ok(())
     }
 
-    pub(in crate::database) async fn find_all(con: &mut PgConnection) -> Result<Vec<Location>, DriverError> {
+    pub(in crate::database) async fn find_all(
+        con: &mut PgConnection,
+    ) -> Result<Vec<Location>, DriverError> {
         // language=SQL
-        let mark = sqlx::query_as::<_, LocationMarkRow>(r#"
+        let mark = sqlx::query_as::<_, LocationMarkRow>(
+            r#"
             SELECT id, location::GEOMETRY FROM location_mark
-        "#).fetch_all(&mut *con)
-            .await?;
+        "#,
+        )
+        .fetch_all(&mut *con)
+        .await?;
 
         // language=SQL
-        let localize = sqlx::query_as::<_, LocationLocalizedRow>(r#"
-        "#).fetch_all(&mut *con)
-            .await?;
+        let localize = sqlx::query_as::<_, LocationLocalizedRow>(
+            r#"
+            SELECT * from location_mark_localized_name
+        "#,
+        )
+        .fetch_all(&mut *con)
+        .await?;
 
-        let loc = mark.into_iter()
+        let loc = mark
+            .into_iter()
             .map(|mark| {
-                let loc = localize.iter()
+                let loc = localize
+                    .iter()
                     .filter(|loc| loc.id.eq(&mark.id))
-                    .map(|f| LocalizedName::new(&f.country, &f.name))
+                    .map(|f| Localize::new(f.country.to_string(), f.name.to_string()))
                     .collect::<Result<Vec<_>, _>>()?;
                 Location::r#try(mark.id, mark.location.geometry.unwrap(), loc)
             })
@@ -264,8 +274,8 @@ impl LocationDataBaseInternal {
             .unwrap();
         let loc = localize
             .into_iter()
-            .map(|row| LocalizedName::new(row.country, row.name))
-            .collect::<Result<Vec<LocalizedName>, _>>()?;
+            .map(|row| Localize::new(row.country, row.name))
+            .collect::<Result<Vec<Localize>, _>>()?;
         let loc = Location::new(lid, pos, loc);
 
         Ok(Some(loc))
@@ -276,7 +286,7 @@ impl LocationDataBaseInternal {
 mod tests {
     use crate::database::location::LocationDataBaseInternal;
     use kernel::entities::geology::Position;
-    use kernel::entities::location::{LocalizeId, LocalizedName, Location, LocationId};
+    use kernel::entities::location::{Localize, LocalizeId, Location, LocationId};
     use sqlx::postgres::PgPoolOptions;
     use sqlx::{PgConnection, Pool, Postgres};
     use std::time::Duration;
@@ -303,7 +313,7 @@ mod tests {
             ("en", "Ehime Prefectural Office Branch Office"),
         ]
         .into_iter()
-        .map(|(c, n)| LocalizedName::new(c, n))
+        .map(|(c, n)| Localize::new(c, n))
         .collect::<Result<Vec<_>, _>>()?;
         let loc = Location::new(lid, pos, loc);
 
@@ -321,7 +331,10 @@ mod tests {
         let mut transaction = pool.begin().await?;
 
         let loc = create(&mut transaction).await?;
-        println!("{:#?}", loc);
+        println!("{:?}", loc);
+
+        let v = LocationDataBaseInternal::find_all(&mut transaction).await?;
+        println!("{:?}", v);
 
         transaction.rollback().await?;
 
@@ -345,7 +358,7 @@ mod tests {
             ("en", "Ehime Prefecture Office Branch Office"),
         ]
         .into_iter()
-        .map(|(c, n)| LocalizedName::new(c, n))
+        .map(|(c, n)| Localize::new(c, n))
         .collect::<Result<Vec<_>, _>>()?;
 
         location.pos = pos;

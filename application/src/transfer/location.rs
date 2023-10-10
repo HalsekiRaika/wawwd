@@ -21,7 +21,7 @@ impl From<Location> for LocationDto {
             localize: localize
                 .into_iter()
                 .map(|loc| loc.into_destruct())
-                .map(|des| (des.country_code.into(), des.localize))
+                .map(|des| (des.country_code.into(), des.localize.into()))
                 .collect(),
         }
     }
