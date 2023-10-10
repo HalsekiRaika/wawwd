@@ -12,6 +12,7 @@ async-trait = "0.1"
 uuid = { version = "1.4", features = ["serde", "v4"] }
 time = { version = "0.3", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["raw_value"] }
 geojson = "0.24"
 geo-types = "0.7"
 orbital = "0.1"
