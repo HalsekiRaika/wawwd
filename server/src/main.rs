@@ -1,7 +1,7 @@
-use axum::{Router, Server};
-use server::{Handler, routes};
-use std::net::SocketAddr;
 use axum::routing::get;
+use axum::{Router, Server};
+use server::{routes, Handler};
+use std::net::SocketAddr;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -32,7 +32,13 @@ async fn main() -> anyhow::Result<()> {
     let handler = Handler::init().await?;
 
     let app = Router::new()
-        .route("/locations", get(routes::locations))
+        .route(
+            "/locations",
+            get(routes::locations)
+                .post(routes::reg_location)
+                .patch(routes::upd_location)
+                .delete(routes::del_location),
+        )
         .layer(TraceLayer::new_for_http())
         .with_state(handler);
 

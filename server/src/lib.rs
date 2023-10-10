@@ -1,3 +1,4 @@
+pub mod controller;
 pub mod error;
 mod extract;
 mod handler;
