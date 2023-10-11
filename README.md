@@ -5,6 +5,12 @@ Required
 * Docker-Compose
 * rustup 1.72+
 
+Set Environment Variable
+```shell
+touch .env.docker
+echo "PG_DATABASE_URL=postgresql://wawwd123:wawwd456@postgres_db:5432/wawwd" >> .env.docker
+```
+
 Run On
 ```shell
 docker-compose up -d
