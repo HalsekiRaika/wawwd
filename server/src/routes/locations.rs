@@ -12,6 +12,7 @@ use application::services::{
 };
 use application::transfer::{CreateLocationDto, DeleteLocationDto, UpdateLocationDto};
 use axum::extract::State;
+use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use geojson::{Feature, FeatureCollection};
@@ -41,7 +42,7 @@ pub async fn reg_location(
         })
         .await?;
 
-    Ok(())
+    Ok(StatusCode::CREATED)
 }
 
 pub async fn upd_location(
