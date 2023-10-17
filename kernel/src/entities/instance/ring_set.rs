@@ -30,6 +30,14 @@ impl RingSet {
                 msg: "`Index` should be Unique within a defined value.",
             })
         }
+        if let Some(last) = self.0.last() {
+            if last.addr() == ring.addr() {
+                return Err(KernelError::Conflict {
+                    entity: "Ring",
+                    msg: "`UserIp` conflicts with the last registered user.",
+                })
+            }
+        }
         Ok(())
     }
 }
