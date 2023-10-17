@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use crate::error::KernelError;
 
-#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Index(i32);
 
 impl Index {

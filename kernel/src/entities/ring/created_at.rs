@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
+use time::format_description::well_known::Iso8601;
 use time::OffsetDateTime;
+use crate::error::KernelError;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Deserialize, Serialize)]
 pub struct CreatedAt(OffsetDateTime);
@@ -7,6 +9,15 @@ pub struct CreatedAt(OffsetDateTime);
 impl CreatedAt {
     pub fn new(at: impl Into<OffsetDateTime>) -> CreatedAt {
         Self(at.into())
+    }
+
+    pub fn format(self) -> Result<String, KernelError> {
+        self.0.format(&Iso8601::DEFAULT)
+            .map_err(|e| KernelError::TryConversion {
+                from: "kernel::entities::ring::CreatedAt",
+                to: "String",
+                source: anyhow::Error::new(e),
+            })
     }
 }
 
@@ -25,5 +36,11 @@ impl AsRef<OffsetDateTime> for CreatedAt {
 impl From<CreatedAt> for OffsetDateTime {
     fn from(value: CreatedAt) -> Self {
         value.0
+    }
+}
+
+impl Default for CreatedAt {
+    fn default() -> Self {
+        Self(OffsetDateTime::now_utc())
     }
 }

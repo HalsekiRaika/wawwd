@@ -15,7 +15,6 @@ CREATE TABLE location_mark_localized_name(
 CREATE TABLE instances(
   id          UUID        NOT NULL PRIMARY KEY,
   location    UUID        NOT NULL,
-  laps        SERIAL      NOT NULL,
   started_at  TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
   finished_at TIMESTAMPTZ,
 
@@ -31,5 +30,6 @@ CREATE TABLE rings(
   index      SERIAL NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
 
+  UNIQUE (instance, index),
   FOREIGN KEY (instance) REFERENCES instances(id) ON DELETE CASCADE
 );

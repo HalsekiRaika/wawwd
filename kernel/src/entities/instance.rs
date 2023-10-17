@@ -1,12 +1,10 @@
 mod instance_id;
 mod ring_set;
-mod laps;
 mod started_at;
 mod finished_at;
 
 pub use self::{
     instance_id::*,
-    laps::*,
     ring_set::*,
     started_at::*,
     finished_at::*,
@@ -21,7 +19,6 @@ use super::location::LocationId;
 pub struct Instance {
     id: InstanceId,
     location: LocationId,
-    laps: Laps,
     rings: RingSet,
     started_at: StartedAt,
     finished_at: FinishedAt,
@@ -31,7 +28,6 @@ impl Instance {
     pub fn new(
         id: InstanceId,
         location: LocationId,
-        laps: Laps,
         rings: RingSet,
         started_at: StartedAt,
         finished_at: FinishedAt
@@ -39,7 +35,6 @@ impl Instance {
         Self {
             id,
             location,
-            laps,
             rings,
             started_at,
             finished_at,
@@ -54,10 +49,6 @@ impl Instance {
 
     pub fn location(&self) -> &LocationId {
         &self.location
-    }
-
-    pub fn laps(&self) -> &Laps {
-        &self.laps
     }
 
     pub fn rings(&self) -> &RingSet {

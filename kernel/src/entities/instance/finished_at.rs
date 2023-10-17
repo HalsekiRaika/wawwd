@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, Default, Ord, PartialOrd, Eq, PartialEq, Deserialize, Serialize)]
 pub struct FinishedAt(Option<OffsetDateTime>);
 
 impl FinishedAt {

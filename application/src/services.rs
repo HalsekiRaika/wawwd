@@ -1,3 +1,9 @@
 mod location;
+mod ring;
+mod internal;
 
-pub use self::location::*;
+pub use self::{
+    location::*,
+    ring::*,
+    internal::*
+};

@@ -19,7 +19,8 @@ impl From<KernelError> for ApplicationError {
         match value {
             KernelError::Validation { .. }
             | KernelError::TryConversion { .. }
-            | KernelError::UnSupportedTypeConversion { .. } => {
+            | KernelError::UnSupportedTypeConversion { .. } 
+            | KernelError::Conflict { .. } => {
                 Self::Kernel(anyhow::Error::new(value))
             }
             KernelError::Driver(e) => Self::Other(e),

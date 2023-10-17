@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -25,5 +26,17 @@ impl AsRef<Uuid> for InstanceId {
 impl From<InstanceId> for Uuid {
     fn from(value: InstanceId) -> Self {
         value.0
+    }
+}
+
+impl Default for InstanceId {
+    fn default() -> Self {
+        Self::new(Uuid::new_v4())
+    }
+}
+
+impl Display for InstanceId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }

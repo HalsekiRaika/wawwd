@@ -21,3 +21,9 @@ impl AsRef<Uuid> for RingId {
         &self.0
     }
 }
+
+impl Default for RingId {
+    fn default() -> Self {
+        Self(Uuid::new_v4())
+    }
+}

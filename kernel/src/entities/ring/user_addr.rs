@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use std::net::Ipv4Addr;
 use std::str::FromStr;
 use serde::{Deserialize, Serialize};
@@ -32,5 +33,24 @@ impl AsRef<Ipv4Addr> for UserIp {
 impl From<UserIp> for Ipv4Addr {
     fn from(value: UserIp) -> Self {
         value.0
+    }
+}
+
+impl Display for UserIp {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use crate::entities::ring::UserIp;
+
+    #[test]
+    fn display() -> anyhow::Result<()> {
+        let addr = UserIp::new("127.0.0.1")?;
+        println!("{}", addr);
+        Ok(())
     }
 }

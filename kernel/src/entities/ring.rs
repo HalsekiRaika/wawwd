@@ -81,6 +81,12 @@ impl PartialEq<Self> for Ring {
     }
 }
 
+impl PartialEq<Index> for Ring {
+    fn eq(&self, other: &Index) -> bool {
+        self.index.eq(other)
+    }
+}
+
 impl PartialEq<CreatedAt> for Ring {
     fn eq(&self, other: &CreatedAt) -> bool {
         self.created_at.eq(other)

@@ -27,3 +27,9 @@ impl From<StartedAt> for OffsetDateTime {
         value.0
     }
 }
+
+impl Default for StartedAt {
+    fn default() -> Self {
+        Self(OffsetDateTime::now_utc())
+    }
+}
