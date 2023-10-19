@@ -8,6 +8,7 @@ pub use self::{localize::*, localize_id::*, localized_name::*, location_id::*};
 use destructure::Destructure;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use crate::entities::geology::Radius;
 
 use crate::error::KernelError;
 
@@ -17,22 +18,25 @@ use super::geology::Position;
 pub struct Location {
     id: LocationId,
     pos: Position,
+    rad: Radius,
     localize: Vec<Localize>,
 }
 
 impl Location {
-    pub fn new(id: LocationId, pos: Position, localize: Vec<Localize>) -> Location {
-        Self { id, pos, localize }
+    pub fn new(id: LocationId, pos: Position, rad: Radius, localize: Vec<Localize>) -> Location {
+        Self { id, pos, rad, localize }
     }
 
     pub fn r#try(
         id: impl Into<Uuid>,
         pos: impl TryInto<Position, Error = KernelError>,
+        rad: impl Into<i32>,
         localize: impl Into<Vec<Localize>>,
     ) -> Result<Location, KernelError> {
         Ok(Self {
             id: LocationId::new(id),
             pos: pos.try_into()?,
+            rad: Radius::new(rad),
             localize: localize.into(),
         })
     }
@@ -43,6 +47,10 @@ impl Location {
 
     pub fn pos(&self) -> &Position {
         &self.pos
+    }
+
+    pub fn rad(&self) -> &Radius {
+        &self.rad
     }
 
     pub fn localize(&self) -> &[Localize] {
@@ -70,6 +78,7 @@ impl TryFrom<Location> for geojson::Feature {
         map.extend(loc);
 
         let mut obj = geojson::JsonObject::new();
+        obj.insert("radius".to_string(), i32::from(value.rad).into());
         obj.insert("localize".to_string(), Value::from(map));
 
         Ok(geojson::Feature {
@@ -116,19 +125,25 @@ impl TryFrom<geojson::GeoJson> for Location {
                     },
                 )?;
 
+                #[derive(Deserialize)]
+                pub struct Ext {
+                    radius: Radius,
+                    localize: Vec<Localize>
+                }
+
                 let props = properties
-                    .map(|raw| serde_json::from_value::<Vec<Localize>>(raw.into()))
+                    .map(|raw| serde_json::from_value::<Ext>(raw.into()))
                     .transpose()
                     .map_err(|e| KernelError::TryConversion {
                         from: "serde_json::Value",
-                        to: "Vec<kernel::location::LocalizedName>",
+                        to: "internal::Ext",
                         source: anyhow::Error::new(e),
                     })?
                     .ok_or(KernelError::Validation {
-                        msg: "`localize` does not empty value. This value must be required.",
+                        msg: "`properties` does not empty value. This value must be required.",
                     })?;
 
-                let loc = Location::new(lid, pos, props);
+                let loc = Location::new(lid, pos, props.radius, props.localize);
                 Ok(loc)
             }
             geojson::GeoJson::FeatureCollection(_) => Err(KernelError::UnSupportedTypeConversion {
@@ -145,7 +160,7 @@ impl TryFrom<geojson::GeoJson> for Location {
 
 #[cfg(test)]
 mod tests {
-    use crate::entities::geology::Position;
+    use crate::entities::geology::{Position, Radius};
     use crate::entities::location::{Localize, Location, LocationId};
     use geojson::Feature;
 
@@ -154,6 +169,7 @@ mod tests {
         let loc = Location::new(
             LocationId::default(),
             Position::new(135.315684651, 64.126213518)?,
+            Radius::new(100),
             vec![Localize::new("jp", "あいうえお")?],
         );
 

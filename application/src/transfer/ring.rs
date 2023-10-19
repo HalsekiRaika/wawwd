@@ -13,17 +13,13 @@ pub struct RingDto {
     pub indexed: i32,
     pub hue: i32,
     pub address: String,
-    pub created_at: OffsetDateTime
+    pub created_at: OffsetDateTime,
 }
 
 impl From<(Instance, Ring)> for RingDto {
     fn from(value: (Instance, Ring)) -> Self {
         let (instance, ring) = value;
-        let DestructInstance {
-            id,
-            location,
-            ..
-        } = instance.into_destruct();
+        let DestructInstance { id, location, .. } = instance.into_destruct();
         let instance_id = id;
         let DestructRing {
             id,
@@ -31,12 +27,9 @@ impl From<(Instance, Ring)> for RingDto {
             addr,
             index,
             color,
-            created_at
+            created_at,
         } = ring.into_destruct();
-        let DestructPosition {
-            x,
-            y
-        } = pos_in.into_destruct();
+        let DestructPosition { x, y } = pos_in.into_destruct();
         Self {
             id: id.into(),
             instance: instance_id.into(),
@@ -54,8 +47,8 @@ impl From<(Instance, Ring)> for RingDto {
 pub struct CreateRingDto {
     pub instance: Option<Uuid>,
     pub location: Uuid,
-    pub longitude: i32,
-    pub latitude: i32,
+    pub longitude: f64,
+    pub latitude: f64,
     pub indexed: i32,
     pub hue: i32,
     pub address: String,

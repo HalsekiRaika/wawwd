@@ -1,7 +1,8 @@
-use std::collections::BTreeSet;
-use serde::{Deserialize, Serialize};
+use std::collections::btree_set::Iter;
 use crate::entities::ring::Ring;
 use crate::error::KernelError;
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct RingSet(BTreeSet<Ring>);
@@ -12,33 +13,47 @@ impl RingSet {
         if rings.len() >= 71 {
             return Err(KernelError::Validation {
                 msg: "`RingSet` length should be less than 71.",
-            })
+            });
         }
 
         Ok(Self(BTreeSet::from_iter(rings)))
     }
 
-    pub fn valid(&self, ring: &Ring) -> Result<(), KernelError> {
+    pub fn add(&mut self, ring: Ring) -> Result<(), KernelError> {
         if (self.0.len() + 1) >= 71 {
             return Err(KernelError::Validation {
                 msg: "`RingSet` length should be less than 71.",
-            })
+            });
         }
         if self.0.iter().any(|item| item.index() == ring.index()) {
             return Err(KernelError::Conflict {
                 entity: "RingSet",
                 msg: "`Index` should be Unique within a defined value.",
-            })
+            });
         }
         if let Some(last) = self.0.last() {
             if last.addr() == ring.addr() {
                 return Err(KernelError::Conflict {
                     entity: "Ring",
                     msg: "`UserIp` conflicts with the last registered user.",
-                })
+                });
             }
         }
+
+        self.0.insert(ring);
         Ok(())
+    }
+
+    pub fn iter(&self) -> Iter<'_, Ring> {
+        self.0.iter()
+    }
+    
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
     }
 }
 
@@ -67,7 +82,6 @@ impl AsRef<BTreeSet<Ring>> for RingSet {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::entities::geology::Position;
@@ -82,8 +96,7 @@ mod tests {
         let index = Index::new(12)?;
         let color = HueColor::new(100);
         let created_at = CreatedAt::default();
-        let ring1 = Ring::new(id, pos, addr, index , color, created_at);
-
+        let ring1 = Ring::new(id, pos, addr, index, color, created_at);
 
         let id = RingId::default();
         let pos = Position::new(135, 83)?;
@@ -91,8 +104,7 @@ mod tests {
         let index = Index::new(12)?;
         let color = HueColor::new(100);
         let created_at = CreatedAt::default();
-        let ring2 = Ring::new(id, pos, addr, index , color, created_at);
-
+        let ring2 = Ring::new(id, pos, addr, index, color, created_at);
 
         let id = RingId::default();
         let pos = Position::new(135, 82)?;
@@ -100,7 +112,7 @@ mod tests {
         let index = Index::new(13)?;
         let color = HueColor::new(100);
         let created_at = CreatedAt::default();
-        let ring3 = Ring::new(id, pos, addr, index , color, created_at);
+        let ring3 = Ring::new(id, pos, addr, index, color, created_at);
 
         let v = vec![ring1, ring3, ring2];
 

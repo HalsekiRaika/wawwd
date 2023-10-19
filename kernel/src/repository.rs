@@ -1,9 +1,4 @@
-mod location;
-mod ring;
 mod instance;
+mod location;
 
-pub use self::{
-    instance::*,
-    location::*,
-    ring::*,
-};
+pub use self::{instance::*, location::*};

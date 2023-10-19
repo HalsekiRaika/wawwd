@@ -10,15 +10,15 @@ impl RingId {
     }
 }
 
-impl From<RingId> for Uuid {
-    fn from(value: RingId) -> Self {
-        value.0
-    }
-}
-
 impl AsRef<Uuid> for RingId {
     fn as_ref(&self) -> &Uuid {
         &self.0
+    }
+}
+
+impl From<RingId> for Uuid {
+    fn from(value: RingId) -> Self {
+        value.0
     }
 }
 

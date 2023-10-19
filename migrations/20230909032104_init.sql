@@ -1,5 +1,6 @@
 CREATE TABLE location_mark(
   id       UUID                   PRIMARY KEY,
+  radius   INTEGER                NOT NULL,
   location GEOGRAPHY(POINT, 4326) NOT NULL
 );
 
@@ -22,13 +23,13 @@ CREATE TABLE instances(
 );
 
 CREATE TABLE rings(
-  id         UUID NOT NULL PRIMARY KEY ,
-  instance   UUID NOT NULL,
+  id         UUID                   NOT NULL PRIMARY KEY ,
+  instance   UUID                   NOT NULL,
   pos_in     GEOGRAPHY(POINT, 4326) NOT NULL,
-  hue        SERIAL NOT NULL,
-  addr       INET NOT NULL,
-  index      SERIAL NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+  hue        INTEGER                NOT NULL,
+  addr       INET                   NOT NULL,
+  index      INTEGER                NOT NULL,
+  created_at TIMESTAMPTZ            NOT NULL DEFAULT clock_timestamp(),
 
   UNIQUE (instance, index),
   FOREIGN KEY (instance) REFERENCES instances(id) ON DELETE CASCADE

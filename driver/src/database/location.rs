@@ -3,7 +3,7 @@ use crate::error::DriverError;
 use async_trait::async_trait;
 use geo_types::Geometry;
 use geozero::wkb::Decode;
-use kernel::entities::geology::Position;
+use kernel::entities::geology::{Position, Radius};
 use kernel::entities::location::{Localize, LocalizeId, Location, LocationId};
 use kernel::error::KernelError;
 use kernel::external::uuid::Uuid;
@@ -69,6 +69,7 @@ impl LocationRepository for LocationDataBase {
 pub(in crate::database) struct LocationMarkRow {
     pub id: Uuid,
     pub location: Decode<Geometry>,
+    pub radius: i32,
 }
 
 #[allow(unused)]
@@ -91,15 +92,16 @@ impl LocationDataBaseInternal {
         sqlx::query(
             r#"
             INSERT INTO location_mark(
-              id, location
+              id, location, radius
             ) VALUES (
-              $1, ST_SETSRID(ST_POINT($2, $3), 4326)
+              $1, ST_SETSRID(ST_POINT($2, $3), 4326), $4
             )
         "#,
         )
         .bind(ctx.id().as_ref())
         .bind(ctx.pos().x().as_ref())
         .bind(ctx.pos().y().as_ref())
+        .bind(ctx.rad().as_ref())
         .execute(&mut *con)
         .await?;
 
@@ -131,12 +133,14 @@ impl LocationDataBaseInternal {
         sqlx::query(
             r#"
             UPDATE location_mark
-              SET location = ST_SETSRID(ST_POINT($1, $2), 4326)
-            WHERE id = $3
+              SET location = ST_SETSRID(ST_POINT($1, $2), 4326),
+                  radius = $3
+            WHERE id = $4
         "#,
         )
         .bind(ctx.pos().x().as_ref())
         .bind(ctx.pos().y().as_ref())
+        .bind(ctx.rad().as_ref())
         .bind(ctx.id().as_ref())
         .execute(&mut *con)
         .await?;
@@ -208,7 +212,7 @@ impl LocationDataBaseInternal {
         // language=SQL
         let mark = sqlx::query_as::<_, LocationMarkRow>(
             r#"
-            SELECT id, location::GEOMETRY FROM location_mark
+            SELECT id, location::GEOMETRY, radius FROM location_mark
         "#,
         )
         .fetch_all(&mut *con)
@@ -231,7 +235,7 @@ impl LocationDataBaseInternal {
                     .filter(|loc| loc.id.eq(&mark.id))
                     .map(|f| Localize::new(f.country.to_string(), f.name.to_string()))
                     .collect::<Result<Vec<_>, _>>()?;
-                Location::r#try(mark.id, mark.location.geometry.unwrap(), loc)
+                Location::r#try(mark.id, mark.location.geometry.unwrap(), mark.radius, loc)
             })
             .collect::<Result<Vec<Location>, _>>()?;
 
@@ -245,7 +249,7 @@ impl LocationDataBaseInternal {
         // language=SQL
         let mark = sqlx::query_as::<_, LocationMarkRow>(
             r#"
-            SELECT id, location::GEOMETRY FROM location_mark WHERE id = $1
+            SELECT id, location::GEOMETRY, radius FROM location_mark WHERE id = $1
         "#,
         )
         .bind(id.as_ref())
@@ -272,11 +276,12 @@ impl LocationDataBaseInternal {
             .map(Position::try_from)
             .transpose()?
             .unwrap();
+        let rad = Radius::new(mark.radius);
         let loc = localize
             .into_iter()
             .map(|row| Localize::new(row.country, row.name))
             .collect::<Result<Vec<Localize>, _>>()?;
-        let loc = Location::new(lid, pos, loc);
+        let loc = Location::new(lid, pos, rad, loc);
 
         Ok(Some(loc))
     }
@@ -285,7 +290,7 @@ impl LocationDataBaseInternal {
 #[cfg(test)]
 mod tests {
     use crate::database::location::LocationDataBaseInternal;
-    use kernel::entities::geology::Position;
+    use kernel::entities::geology::{Position, Radius};
     use kernel::entities::location::{Localize, LocalizeId, Location, LocationId};
     use sqlx::postgres::PgPoolOptions;
     use sqlx::{PgConnection, Pool, Postgres};
@@ -308,6 +313,7 @@ mod tests {
     async fn create(con: &mut PgConnection) -> anyhow::Result<Location> {
         let lid = LocationId::default();
         let pos = Position::new(132.76661710012877f64, 33.841405349477995f64)?;
+        let rad = Radius::new(100);
         let loc = vec![
             ("jp", "愛媛県庁第一別館"),
             ("en", "Ehime Prefectural Office Branch Office"),
@@ -315,7 +321,7 @@ mod tests {
         .into_iter()
         .map(|(c, n)| Localize::new(c, n))
         .collect::<Result<Vec<_>, _>>()?;
-        let loc = Location::new(lid, pos, loc);
+        let loc = Location::new(lid, pos, rad, loc);
 
         LocationDataBaseInternal::create(&loc, &mut *con).await?;
         let loc = LocationDataBaseInternal::find_by_id(&lid, &mut *con).await?;

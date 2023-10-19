@@ -10,12 +10,6 @@ impl StartedAt {
     }
 }
 
-impl AsRef<StartedAt> for StartedAt {
-    fn as_ref(&self) -> &StartedAt {
-        self
-    }
-}
-
 impl AsRef<OffsetDateTime> for StartedAt {
     fn as_ref(&self) -> &OffsetDateTime {
         &self.0

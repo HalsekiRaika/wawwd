@@ -11,12 +11,6 @@ impl HueColor {
     }
 }
 
-impl AsRef<HueColor> for HueColor {
-    fn as_ref(&self) -> &Self {
-        self
-    }
-}
-
 impl AsRef<i32> for HueColor {
     fn as_ref(&self) -> &i32 {
         &self.0

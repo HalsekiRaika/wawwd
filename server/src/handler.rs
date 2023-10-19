@@ -1,14 +1,13 @@
 use crate::error::ServerError;
-use application::services::{
-    DependOnCreateLocationService, DependOnDeleteLocationService, DependOnUpdateLocationService,
-};
-use driver::database::LocationDataBase;
+use application::services::{DependOnCreateInstanceService, DependOnCreateLocationService, DependOnCreateRingService, DependOnDeleteLocationService, DependOnUpdateInstanceService, DependOnUpdateLocationService};
+use driver::database::{InstanceDataBase, LocationDataBase};
 use driver::DataBaseInitializer;
-use kernel::repository::DependOnLocationRepository;
+use kernel::repository::{DependOnInstanceRepository, DependOnLocationRepository};
 
 #[derive(Clone)]
 pub struct Handler {
     loc: LocationDataBase,
+    ins: InstanceDataBase,
 }
 
 impl Handler {
@@ -19,9 +18,10 @@ impl Handler {
 
         let pg_pool = DataBaseInitializer::setup(pg_url).await?;
 
-        let loc = LocationDataBase::new(pg_pool);
+        let loc = LocationDataBase::new(pg_pool.clone());
+        let ins = InstanceDataBase::new(pg_pool);
 
-        Ok(Self { loc })
+        Ok(Self { loc, ins })
     }
 }
 
@@ -50,6 +50,34 @@ impl DependOnDeleteLocationService for Handler {
     type DeleteLocationService = Self;
 
     fn delete_location_service(&self) -> &Self::DeleteLocationService {
+        self
+    }
+}
+
+impl DependOnInstanceRepository for Handler {
+    type InstanceRepository = InstanceDataBase;
+    fn instance_repository(&self) -> &Self::InstanceRepository {
+        &self.ins
+    }
+}
+
+impl DependOnCreateRingService for Handler {
+    type CreateRingService = Self;
+    fn create_ring_service(&self) -> &Self::CreateRingService {
+        self
+    }
+}
+
+impl DependOnCreateInstanceService for Handler {
+    type CreateInstanceService = Self;
+    fn create_instance_service(&self) -> &Self::CreateInstanceService {
+        self
+    }
+}
+
+impl DependOnUpdateInstanceService for Handler {
+    type UpdateInstanceService = Self;
+    fn update_instance_service(&self) -> &Self::UpdateInstanceService {
         self
     }
 }

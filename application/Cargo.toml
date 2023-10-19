@@ -3,11 +3,11 @@ name = "application"
 version = "0.1.0"
 edition = "2021"
 license = { workspace = true }
+publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mockall = "0.11"
 async-trait = "0.1"
 orbital = "0.1"
 
@@ -18,6 +18,3 @@ kernel = { path = "../kernel", features = ["ext"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
-
-[features]
-mock = []

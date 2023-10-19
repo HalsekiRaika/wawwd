@@ -26,12 +26,16 @@ impl IntoResponse for ServerError {
     fn into_response(self) -> Response {
         let (status, msg) = match self {
             ServerError::IO(e) => (StatusCode::BAD_REQUEST, e.to_string()),
-            ServerError::HandlerInitialization(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+            ServerError::HandlerInitialization(e) => {
+                (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+            }
             ServerError::Driver(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             ServerError::Application(e) => match e {
                 ApplicationError::Kernel(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-                ApplicationError::NotFound{ target, .. } => (StatusCode::NOT_FOUND, target.to_string()),
-                ApplicationError::Other(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+                ApplicationError::NotFound { target, .. } => {
+                    (StatusCode::NOT_FOUND, target.to_string())
+                }
+                ApplicationError::Other(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             },
             ServerError::Kernel(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             ServerError::EnvError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),

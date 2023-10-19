@@ -40,6 +40,7 @@ impl TryIntake<GeoJson> for GeoJsonToCreateLocationDto {
 
         #[derive(Debug, Deserialize)]
         struct Extensions {
+            radius: i32,
             localize: HashMap<String, String>,
         }
 
@@ -51,6 +52,7 @@ impl TryIntake<GeoJson> for GeoJsonToCreateLocationDto {
         Ok(CreateLocationDto {
             latitude: point[1],
             longitude: point[0],
+            radius: props.radius,
             localize: props
                 .localize
                 .into_iter()

@@ -1,36 +1,31 @@
-use std::fmt::{Display, Formatter};
-use std::net::Ipv4Addr;
-use std::str::FromStr;
-use serde::{Deserialize, Serialize};
 use crate::error::KernelError;
+use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
+use std::net::{IpAddr, Ipv4Addr};
+use std::str::FromStr;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Deserialize, Serialize)]
-pub struct UserIp(Ipv4Addr);
+pub struct UserIp(IpAddr);
 
 impl UserIp {
     pub fn new(addr: impl AsRef<str>) -> Result<UserIp, KernelError> {
-        Ok(Self(Ipv4Addr::from_str(addr.as_ref())
+        Ok(Self(IpAddr::from(Ipv4Addr::from_str(addr.as_ref())
             .map_err(|e| KernelError::TryConversion {
                 from: "&str",
                 to: "UserIp",
                 source: anyhow::Error::new(e),
-            })?))
+            })?
+        )))
     }
 }
 
-impl AsRef<UserIp> for UserIp {
-    fn as_ref(&self) -> &UserIp {
-        self
-    }
-}
-
-impl AsRef<Ipv4Addr> for UserIp {
-    fn as_ref(&self) -> &Ipv4Addr {
+impl AsRef<IpAddr> for UserIp {
+    fn as_ref(&self) -> &IpAddr {
         &self.0
     }
 }
 
-impl From<UserIp> for Ipv4Addr {
+impl From<UserIp> for IpAddr {
     fn from(value: UserIp) -> Self {
         value.0
     }
@@ -41,7 +36,6 @@ impl Display for UserIp {
         write!(f, "{}", self.0)
     }
 }
-
 
 #[cfg(test)]
 mod tests {

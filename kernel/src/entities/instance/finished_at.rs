@@ -5,18 +5,15 @@ use time::OffsetDateTime;
 pub struct FinishedAt(Option<OffsetDateTime>);
 
 impl FinishedAt {
-    pub fn new<T>(at: impl Into<Option<T>>) -> FinishedAt where T: Into<OffsetDateTime> {
+    pub fn new<T>(at: impl Into<Option<T>>) -> FinishedAt
+    where
+        T: Into<OffsetDateTime>,
+    {
         Self(at.into().map(Into::into))
     }
 
     pub fn is_finished(&self) -> bool {
         self.0.is_some()
-    }
-}
-
-impl AsRef<FinishedAt> for FinishedAt {
-    fn as_ref(&self) -> &FinishedAt {
-        self
     }
 }
 

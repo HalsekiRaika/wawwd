@@ -1,6 +1,8 @@
 mod locations;
+mod rings;
 
 pub use self::locations::*;
+pub use self::rings::*;
 
 use std::{future::IntoFuture, marker::PhantomData};
 
@@ -197,6 +199,16 @@ where
     }
 }
 
+impl<P, O> Controller<(), P, (), (), O> {
+    pub async fn bypass<F, Fut, E>(self, f: F) -> Result<O, E>
+        where
+            F: FnOnce() -> Fut,
+            Fut: IntoFuture<Output = Result<O, E>>,
+    {
+        f().await
+    }
+}
+
 pub struct Transformed<T, P, I, D, O> {
     trans: D,
     controller: Controller<T, P, I, D, O>,
@@ -239,8 +251,8 @@ where
     }
 }
 
-impl<T, P, I, D, O> Transformed<T, P, I, D, O> {
-    pub async fn bypass<F, Fut, E>(self, f: F) -> Result<O, E>
+impl<T, I, D> Transformed<T, (), I, D, ()> {
+    pub async fn bypass<F, Fut, O, E>(self, f: F) -> Result<O, E>
     where
         F: FnOnce(D) -> Fut,
         Fut: IntoFuture<Output = Result<O, E>>,

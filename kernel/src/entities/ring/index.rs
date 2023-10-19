@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::error::KernelError;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Index(i32);
@@ -7,10 +7,10 @@ pub struct Index(i32);
 impl Index {
     pub fn new(index: impl Into<i32>) -> Result<Index, KernelError> {
         let index = index.into();
-        if index < 0 && index > 69 { 
+        if index < 0 && index > 69 {
             return Err(KernelError::Validation {
                 msg: "index value should be 0~69",
-            })
+            });
         }
         Ok(Self(index))
     }

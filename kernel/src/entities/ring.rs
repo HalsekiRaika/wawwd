@@ -4,18 +4,12 @@ mod index;
 mod ring_id;
 mod user_addr;
 
-pub use self::{
-    created_at::*,
-    hue::*,
-    index::*,
-    ring_id::*,
-    user_addr::*,
-};
+pub use self::{created_at::*, hue::*, index::*, ring_id::*, user_addr::*};
 
-use std::cmp::Ordering;
-use serde::{Deserialize, Serialize};
-use destructure::Destructure;
 use crate::entities::geology::Position;
+use destructure::Destructure;
+use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 
 #[derive(Debug, Clone, Deserialize, Serialize, Destructure)]
 pub struct Ring {
@@ -34,7 +28,7 @@ impl Ring {
         addr: UserIp,
         index: Index,
         color: HueColor,
-        created_at: CreatedAt
+        created_at: CreatedAt,
     ) -> Ring {
         Self {
             id,
@@ -51,23 +45,23 @@ impl Ring {
     pub fn id(&self) -> &RingId {
         &self.id
     }
-    
+
     pub fn pos_in(&self) -> &Position {
         &self.pos_in
     }
-    
+
     pub fn addr(&self) -> &UserIp {
         &self.addr
     }
-    
+
     pub fn index(&self) -> &Index {
         &self.index
     }
-    
+
     pub fn color(&self) -> &HueColor {
         &self.color
     }
-    
+
     pub fn created_at(&self) -> &CreatedAt {
         &self.created_at
     }

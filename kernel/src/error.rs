@@ -3,7 +3,10 @@ pub enum KernelError {
     #[error("Validation Error: {msg}")]
     Validation { msg: &'static str },
     #[error("Conflict in, `{entity}`. {msg}")]
-    Conflict { entity: &'static str, msg: &'static str },
+    Conflict {
+        entity: &'static str,
+        msg: &'static str,
+    },
     #[error("Try type conversion. from: `{from}` -> to: `{to}`, src: {source}")]
     TryConversion {
         from: &'static str,

@@ -1,19 +1,14 @@
+mod finished_at;
 mod instance_id;
 mod ring_set;
 mod started_at;
-mod finished_at;
 
-pub use self::{
-    instance_id::*,
-    ring_set::*,
-    started_at::*,
-    finished_at::*,
-};
+use std::cmp::Ordering;
+pub use self::{finished_at::*, instance_id::*, ring_set::*, started_at::*};
 
+use super::location::LocationId;
 use destructure::Destructure;
 use serde::{Deserialize, Serialize};
-use super::location::LocationId;
-
 
 #[derive(Debug, Clone, Deserialize, Serialize, Destructure)]
 pub struct Instance {
@@ -30,7 +25,7 @@ impl Instance {
         location: LocationId,
         rings: RingSet,
         started_at: StartedAt,
-        finished_at: FinishedAt
+        finished_at: FinishedAt,
     ) -> Instance {
         Self {
             id,
@@ -61,5 +56,26 @@ impl Instance {
 
     pub fn finished_at(&self) -> &FinishedAt {
         &self.finished_at
+    }
+}
+
+
+impl Eq for Instance {}
+
+impl PartialEq<Self> for Instance {
+    fn eq(&self, other: &Self) -> bool {
+        self.started_at.eq(&other.started_at)
+    }
+}
+
+impl Ord for Instance {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.started_at.cmp(&other.started_at)
+    }
+}
+
+impl PartialOrd<Self> for Instance {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.started_at.partial_cmp(&other.started_at)
     }
 }
