@@ -199,13 +199,15 @@ where
     }
 }
 
-impl<P, O> Controller<(), P, (), (), O> {
-    pub async fn bypass<F, Fut, E>(self, f: F) -> Result<O, E>
+impl<P, O> Controller<(), P, (), (), O>
+    where P: Exhaust<O>
+{
+    pub async fn bypass<F, Fut, E>(self, f: F) -> Result<P::To, E>
         where
             F: FnOnce() -> Fut,
             Fut: IntoFuture<Output = Result<O, E>>,
     {
-        f().await
+        Ok(self.present().emit(f().await?))
     }
 }
 
@@ -228,12 +230,12 @@ where
     /// Note: Return value is a converted value in accordance with the presenter specified at [`Controller::new`].
     ///
     /// Image as `ViewModel -> Controller::transform -> |Dto| { closure } -> presenter -> ViewModel`
-    pub async fn handle<F, Fut>(self, f: F) -> P::To
+    pub async fn handle<F, Fut, E>(self, f: F) -> Result<P::To, E>
     where
         F: FnOnce(D) -> Fut,
-        Fut: IntoFuture<Output = O>,
+        Fut: IntoFuture<Output = Result<O, E>>,
     {
-        self.controller.present().emit(f(self.trans).await)
+        Ok(self.controller.present().emit(f(self.trans).await?))
     }
 }
 
@@ -290,15 +292,12 @@ mod tests {
 
     pub struct PresenterA;
 
-    impl Exhaust<anyhow::Result<DataDto>> for PresenterA {
-        type To = anyhow::Result<PresentationalDataA>;
-        fn emit(&self, input: anyhow::Result<DataDto>) -> Self::To {
-            match input {
-                Ok(input) => Ok(PresentationalDataA {
-                    id: input.0,
-                    name: input.1,
-                }),
-                Err(_) => Err(anyhow::Error::msg("error")),
+    impl Exhaust<DataDto> for PresenterA {
+        type To = PresentationalDataA;
+        fn emit(&self, input: DataDto) -> Self::To {
+            PresentationalDataA {
+                id: input.0,
+                name: input.1,
             }
         }
     }
