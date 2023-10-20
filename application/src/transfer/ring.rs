@@ -45,7 +45,6 @@ impl From<(Instance, Ring)> for RingDto {
 }
 
 pub struct CreateRingDto {
-    pub instance: Option<Uuid>,
     pub location: Uuid,
     pub longitude: f64,
     pub latitude: f64,
