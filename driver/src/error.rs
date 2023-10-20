@@ -2,6 +2,8 @@ use kernel::error::KernelError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DriverError {
+    #[error("`{column}` is must not empty.")]
+    Decoding { column: &'static str },
     #[error(transparent)]
     Sqlx(anyhow::Error),
     #[error("Failed database initialization. {0}")]
@@ -28,6 +30,7 @@ impl From<DriverError> for KernelError {
             DriverError::Sqlx(e) => Self::Driver(e),
             DriverError::Kernel(e) => Self::Internal(e),
             DriverError::DataBaseInitialization(e) => Self::Internal(e),
+            DriverError::Decoding { .. } => { Self::Driver(anyhow::Error::new(value)) }
         }
     }
 }

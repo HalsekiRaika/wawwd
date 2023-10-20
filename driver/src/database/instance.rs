@@ -43,16 +43,22 @@ impl InstanceRepository for InstanceDataBase {
         InternalInstanceDataBase::delete(delete, &mut con).await?;
         Ok(())
     }
-    
+
     async fn find_all(&self) -> Result<BTreeSet<Instance>, KernelError> {
         let mut con = self.pool.acquire().await.map_err(DriverError::from)?;
         let all = InternalInstanceDataBase::find_all(&mut con).await?;
         Ok(all)
     }
-    
+
     async fn find_by_id(&self, id: &InstanceId) -> Result<Option<Instance>, KernelError> {
         let mut con = self.pool.acquire().await.map_err(DriverError::from)?;
         let found = InternalInstanceDataBase::find_by_id(id, &mut con).await?;
+        Ok(found)
+    }
+
+    async fn find_unfinished(&self) -> Result<Option<Instance>, KernelError> {
+        let mut con = self.pool.acquire().await.map_err(DriverError::from)?;
+        let found = InternalInstanceDataBase::find_unfinished(&mut con).await?;
         Ok(found)
     }
 }
@@ -87,6 +93,20 @@ pub(in crate::database) struct RingRow {
     addr: IpAddr,
     index: i32,
     created_at: OffsetDateTime
+}
+
+impl TryFrom<RingRow> for Ring {
+    type Error = DriverError;
+    fn try_from(value: RingRow) -> Result<Self, Self::Error> {
+        Ok(Self::new(
+            RingId::new(value.id),
+            Position::try_from(value.pos_in.geometry.ok_or(DriverError::Decoding {column: "pos_in"})?)?,
+            UserIp::try_from(value.addr)?,
+            Index::new(value.index)?,
+            HueColor::new(value.hue),
+            CreatedAt::new(value.created_at)
+        ))
+    }
 }
 
 pub(in crate::database) struct InternalInstanceDataBase;
@@ -136,10 +156,10 @@ impl InternalInstanceDataBase {
         query.push_values(update.rings().iter().take(BIND_LIMIT / 7), |mut b, ring| {
             b.push_bind(ring.id().as_ref())
                 .push_bind(update.id().as_ref())
-                .push_unseparated(r#"ST_SETSRID(ST_POINT("#)
-                .push_bind(ring.pos_in().x().as_ref())
+                .push(r#"ST_SETSRID(ST_POINT("#)
+                .push_bind_unseparated(ring.pos_in().x().as_ref())
                 .push_bind(ring.pos_in().y().as_ref())
-                .push(r#"), 4326)"#)
+                .push_unseparated(r#"), 4326)"#)
                 .push_bind(ring.color().as_ref())
                 .push_bind(ring.addr().as_ref())
                 .push_bind(ring.index().as_ref())
@@ -164,7 +184,7 @@ impl InternalInstanceDataBase {
             .await?;
         Ok(())
     }
-    
+
     #[rustfmt::skip]
     pub(in crate::database) async fn find_all(con: &mut PgConnection) -> Result<BTreeSet<Instance>, DriverError> {
         // language=SQL
@@ -176,7 +196,7 @@ impl InternalInstanceDataBase {
             .into_iter()
             .map(TryInto::try_into)
             .collect::<Result<BTreeSet<Instance>, KernelError>>()?;
-        
+
         Ok(all)
     }
 
@@ -216,6 +236,43 @@ impl InternalInstanceDataBase {
                 let rings = RingSet::new(r_row)?;
                 des.rings = rings;
                 Ok(des.freeze())
+            })
+            .transpose()?;
+
+        Ok(found)
+    }
+
+    #[rustfmt::skip]
+    pub(in crate::database) async fn find_unfinished(con: &mut PgConnection) -> Result<Option<Instance>, DriverError> {
+        // language=SQL
+        let instance = sqlx::query_as::<_, InstanceRow>(r#"
+            SELECT id, location, started_at, finished_at FROM instances WHERE instances.finished_at IS NULL
+        "#)
+            .fetch_optional(&mut *con)
+            .await?;
+
+        let rings = if let Some(instance) = &instance {
+            // language=SQL
+            sqlx::query_as::<_, RingRow>(r#"
+                SELECT id, instance, pos_in::GEOMETRY, hue, addr, index, created_at FROM rings WHERE instance = $1
+            "#)
+                .bind(instance.id)
+                .fetch_all(&mut *con)
+                .await
+        } else {
+            return Ok(None)
+        }?;
+
+        let rings = rings.into_iter()
+            .map(TryInto::try_into)
+            .collect::<Result<Vec<Ring>, DriverError>>()?;
+
+        let found = instance.map(TryInto::try_into)
+            .transpose()?
+            .map(|ins: Instance| ins.into_destruct())
+            .map(|mut ins| -> Result<Instance, KernelError> {
+                ins.rings = RingSet::new(rings)?;
+                Ok(ins.freeze())
             })
             .transpose()?;
 

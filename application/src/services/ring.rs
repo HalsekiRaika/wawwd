@@ -30,7 +30,6 @@ pub trait CreateRingService:
 {
     async fn create(&self, create: CreateRingDto) -> Result<RingDto, ApplicationError> {
         let CreateRingDto {
-            instance,
             location,
             longitude,
             latitude,
@@ -40,15 +39,8 @@ pub trait CreateRingService:
             created_at,
         } = create;
 
-        let instance = if let Some(id) = instance.map(InstanceId::new) {
-            self.instance_repository()
-                .find_by_id(&id)
-                .await?
-                .ok_or(ApplicationError::NotFound {
-                    entity: "instance",
-                    target: id.to_string(),
-                    method: "find_by_id",
-                })?
+        let instance = if let Some(instance) = self.instance_repository().find_unfinished().await? {
+            instance
         } else {
             let id = InstanceId::default();
             let location = LocationId::new(location);

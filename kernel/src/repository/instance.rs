@@ -12,4 +12,5 @@ pub trait InstanceRepository: 'static + Sync + Send {
     async fn delete(&self, delete: &InstanceId) -> Result<(), KernelError>;
     async fn find_all(&self) -> Result<BTreeSet<Instance>, KernelError>;
     async fn find_by_id(&self, id: &InstanceId) -> Result<Option<Instance>, KernelError>;
+    async fn find_unfinished(&self) -> Result<Option<Instance>, KernelError>;
 }
