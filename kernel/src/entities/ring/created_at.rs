@@ -4,7 +4,7 @@ use time::format_description::well_known::Iso8601;
 use time::OffsetDateTime;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Deserialize, Serialize)]
-pub struct CreatedAt(OffsetDateTime);
+pub struct CreatedAt(#[serde(with = "time::serde::iso8601")] OffsetDateTime);
 
 impl CreatedAt {
     pub fn new(at: impl Into<OffsetDateTime>) -> CreatedAt {
