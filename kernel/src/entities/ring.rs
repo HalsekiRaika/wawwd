@@ -93,14 +93,14 @@ impl PartialEq<UserIp> for Ring {
     }
 }
 
-impl PartialOrd<Self> for Ring {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.created_at.partial_cmp(&other.created_at)
-    }
-}
-
 impl Ord for Ring {
     fn cmp(&self, other: &Self) -> Ordering {
         self.created_at.cmp(&other.created_at)
+    }
+}
+
+impl PartialOrd<Self> for Ring {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.created_at.partial_cmp(&other.created_at)
     }
 }
