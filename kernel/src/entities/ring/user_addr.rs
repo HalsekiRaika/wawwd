@@ -31,6 +31,19 @@ impl From<UserIp> for IpAddr {
     }
 }
 
+impl TryFrom<IpAddr> for UserIp {
+    type Error = KernelError;
+    fn try_from(value: IpAddr) -> Result<Self, Self::Error> {
+        match value {
+            IpAddr::V4(_) => Ok(Self(value)),
+            IpAddr::V6(_) => Err(KernelError::UnSupportedTypeConversion {
+                from: "IpAddr::V6",
+                to: "UserIp",
+            })
+        }
+    }
+}
+
 impl Display for UserIp {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)

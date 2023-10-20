@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 use std::collections::BTreeSet;
 use serde::Serialize;
 use kernel::entities::instance::{Instance, InstanceId};
+use kernel::entities::ring::Ring;
 use kernel::external::time::OffsetDateTime;
 use kernel::external::uuid::Uuid;
 use crate::controller::{Exhaust, Intake};
@@ -12,6 +13,15 @@ impl Intake<Uuid> for SelectionIdToInstanceId {
     type To = InstanceId;
     fn emit(&self, input: Uuid) -> Self::To {
         InstanceId::new(input)
+    }
+}
+
+pub struct InstanceToDetailResponse;
+
+impl Exhaust<Option<Instance>> for InstanceToDetailResponse {
+    type To = Option<RingInstanceWithDetail>;
+    fn emit(&self, input: Option<Instance>) -> Self::To {
+        input.map(|ins| ins.into())
     }
 }
 
@@ -28,6 +38,31 @@ impl Exhaust<BTreeSet<Instance>> for InstancesToJsonBTreeSet {
 }
 
 
+#[derive(Debug, Serialize)]
+pub struct RingInstanceWithDetail {
+    id: Uuid,
+    location: Uuid,
+    #[serde(with = "kernel::external::time::serde::iso8601")]
+    started_at: OffsetDateTime,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(with = "kernel::external::time::serde::iso8601::option")]
+    finished_at: Option<OffsetDateTime>,
+    rings: BTreeSet<Ring>
+}
+
+impl From<Instance> for RingInstanceWithDetail {
+    fn from(value: Instance) -> Self {
+        let value = value.into_destruct();
+        RingInstanceWithDetail {
+            id: value.id.into(),
+            location: value.location.into(),
+            started_at: value.started_at.into(),
+            finished_at :value.finished_at.into(),
+            rings: value.rings.into(),
+        }
+    }
+}
+
 
 #[derive(Debug, Serialize)]
 pub struct RingInstance {
@@ -37,7 +72,7 @@ pub struct RingInstance {
     started_at: OffsetDateTime,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(with = "kernel::external::time::serde::iso8601::option")]
-    finished_at: Option<OffsetDateTime>
+    finished_at: Option<OffsetDateTime>,
 }
 
 impl From<Instance> for RingInstance {
