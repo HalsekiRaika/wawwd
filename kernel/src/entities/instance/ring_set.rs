@@ -10,7 +10,7 @@ pub struct RingSet(BTreeSet<Ring>);
 impl RingSet {
     pub fn new(vec: impl Into<Vec<Ring>>) -> Result<RingSet, KernelError> {
         let rings = vec.into();
-        if rings.len() >= 71 {
+        if (rings.len() + 1) >= 71 {
             return Err(KernelError::Validation {
                 msg: "`RingSet` length should be less than 71.",
             });
@@ -39,15 +39,19 @@ impl RingSet {
                 });
             }
         }
-
-        self.0.insert(ring);
+        if !self.0.insert(ring) {
+            return Err(KernelError::Conflict {
+                entity: "RingSet",
+                msg: "`CreatedAt` conflicts with Since the request was made at the exact same time."
+            })
+        }
         Ok(())
     }
 
     pub fn iter(&self) -> Iter<'_, Ring> {
         self.0.iter()
     }
-    
+
     pub fn len(&self) -> usize {
         self.0.len()
     }
@@ -79,6 +83,12 @@ impl IntoIterator for RingSet {
 impl AsRef<BTreeSet<Ring>> for RingSet {
     fn as_ref(&self) -> &BTreeSet<Ring> {
         &self.0
+    }
+}
+
+impl From<RingSet> for BTreeSet<Ring> {
+    fn from(value: RingSet) -> Self {
+        value.0
     }
 }
 
