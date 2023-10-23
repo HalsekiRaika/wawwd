@@ -1,7 +1,7 @@
-use std::collections::btree_set::Iter;
 use crate::entities::ring::Ring;
 use crate::error::KernelError;
 use serde::{Deserialize, Serialize};
+use std::collections::btree_set::Iter;
 use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
@@ -42,8 +42,9 @@ impl RingSet {
         if !self.0.insert(ring) {
             return Err(KernelError::Conflict {
                 entity: "RingSet",
-                msg: "`CreatedAt` conflicts with Since the request was made at the exact same time."
-            })
+                msg:
+                    "`CreatedAt` conflicts with Since the request was made at the exact same time.",
+            });
         }
         Ok(())
     }

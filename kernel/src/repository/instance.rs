@@ -1,10 +1,11 @@
-use std::collections::BTreeSet;
 use crate::entities::instance::{Instance, InstanceId};
+use crate::entities::location::LocationId;
 use crate::error::KernelError;
 use async_trait::async_trait;
 use orbital::export_service;
-use crate::entities::location::LocationId;
+use std::collections::BTreeSet;
 
+#[rustfmt::skip]
 #[async_trait]
 #[export_service]
 pub trait InstanceRepository: 'static + Sync + Send {

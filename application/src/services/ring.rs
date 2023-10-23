@@ -41,7 +41,11 @@ pub trait CreateRingService:
 
         let location = LocationId::new(location);
 
-        let instance = if let Some(instance) = self.instance_repository().find_unfinished(&location).await? {
+        let instance = if let Some(instance) = self
+            .instance_repository()
+            .find_unfinished(&location)
+            .await?
+        {
             instance
         } else {
             let id = InstanceId::default();

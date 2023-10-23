@@ -5,10 +5,10 @@ mod location_id;
 
 pub use self::{localize::*, localize_id::*, localized_name::*, location_id::*};
 
+use crate::entities::geology::Radius;
 use destructure::Destructure;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::entities::geology::Radius;
 
 use crate::error::KernelError;
 
@@ -24,7 +24,12 @@ pub struct Location {
 
 impl Location {
     pub fn new(id: LocationId, pos: Position, rad: Radius, localize: Vec<Localize>) -> Location {
-        Self { id, pos, rad, localize }
+        Self {
+            id,
+            pos,
+            rad,
+            localize,
+        }
     }
 
     pub fn r#try(
@@ -128,7 +133,7 @@ impl TryFrom<geojson::GeoJson> for Location {
                 #[derive(Deserialize)]
                 pub struct Ext {
                     radius: Radius,
-                    localize: Vec<Localize>
+                    localize: Vec<Localize>,
                 }
 
                 let props = properties

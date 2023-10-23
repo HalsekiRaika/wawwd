@@ -21,7 +21,10 @@ pub enum ServerError {
     #[error("Required environment variable not set! `{0}` must set.")]
     EnvError(&'static str),
     #[error("Not found, `{entity}`: target `{target}`")]
-    NotFound { entity: &'static str, target: String }
+    NotFound {
+        entity: &'static str,
+        target: String,
+    },
 }
 
 impl IntoResponse for ServerError {
@@ -41,7 +44,7 @@ impl IntoResponse for ServerError {
             },
             ServerError::Kernel(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             ServerError::EnvError(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-            ServerError::NotFound { .. } => (StatusCode::NOT_FOUND, self.to_string())
+            ServerError::NotFound { .. } => (StatusCode::NOT_FOUND, self.to_string()),
         };
 
         let json = json!({ "error": msg });
@@ -62,7 +65,7 @@ impl From<DriverError> for ServerError {
             DriverError::DataBaseInitialization(e) => ServerError::HandlerInitialization(e),
             DriverError::Sqlx(e) => ServerError::Driver(e),
             DriverError::Kernel(e) => ServerError::Kernel(e),
-            DriverError::Decoding { .. } => ServerError::Driver(anyhow::Error::new(value))
+            DriverError::Decoding { .. } => ServerError::Driver(anyhow::Error::new(value)),
         }
     }
 }

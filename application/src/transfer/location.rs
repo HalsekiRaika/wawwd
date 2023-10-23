@@ -13,7 +13,12 @@ pub struct LocationDto {
 
 impl From<Location> for LocationDto {
     fn from(value: Location) -> Self {
-        let DestructLocation { id, pos, rad, localize } = value.into_destruct();
+        let DestructLocation {
+            id,
+            pos,
+            rad,
+            localize,
+        } = value.into_destruct();
         let DestructPosition { x, y } = pos.into_destruct();
         Self {
             id: id.into(),

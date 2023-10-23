@@ -1,5 +1,8 @@
 use crate::error::ServerError;
-use application::services::{DependOnCreateInstanceService, DependOnCreateLocationService, DependOnCreateRingService, DependOnDeleteLocationService, DependOnUpdateInstanceService, DependOnUpdateLocationService};
+use application::services::{
+    DependOnCreateInstanceService, DependOnCreateLocationService, DependOnCreateRingService,
+    DependOnDeleteLocationService, DependOnUpdateInstanceService, DependOnUpdateLocationService,
+};
 use driver::database::{InstanceDataBase, LocationDataBase};
 use driver::DataBaseInitializer;
 use kernel::repository::{DependOnInstanceRepository, DependOnLocationRepository};

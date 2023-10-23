@@ -9,12 +9,12 @@ pub struct UserIp(IpAddr);
 
 impl UserIp {
     pub fn new(addr: impl AsRef<str>) -> Result<UserIp, KernelError> {
-        Ok(Self(IpAddr::from(Ipv4Addr::from_str(addr.as_ref())
-            .map_err(|e| KernelError::TryConversion {
+        Ok(Self(IpAddr::from(
+            Ipv4Addr::from_str(addr.as_ref()).map_err(|e| KernelError::TryConversion {
                 from: "&str",
                 to: "UserIp",
                 source: anyhow::Error::new(e),
-            })?
+            })?,
         )))
     }
 }
@@ -39,7 +39,7 @@ impl TryFrom<IpAddr> for UserIp {
             IpAddr::V6(_) => Err(KernelError::UnSupportedTypeConversion {
                 from: "IpAddr::V6",
                 to: "UserIp",
-            })
+            }),
         }
     }
 }

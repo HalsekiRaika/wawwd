@@ -30,7 +30,7 @@ impl From<DriverError> for KernelError {
             DriverError::Sqlx(e) => Self::Driver(e),
             DriverError::Kernel(e) => Self::Internal(e),
             DriverError::DataBaseInitialization(e) => Self::Internal(e),
-            DriverError::Decoding { .. } => { Self::Driver(anyhow::Error::new(value)) }
+            DriverError::Decoding { .. } => Self::Driver(anyhow::Error::new(value)),
         }
     }
 }

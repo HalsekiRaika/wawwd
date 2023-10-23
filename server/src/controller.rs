@@ -200,12 +200,13 @@ where
 }
 
 impl<P, O> Controller<(), P, (), (), O>
-    where P: Exhaust<O>
+where
+    P: Exhaust<O>,
 {
     pub async fn bypass<F, Fut, E>(self, f: F) -> Result<P::To, E>
-        where
-            F: FnOnce() -> Fut,
-            Fut: IntoFuture<Output = Result<O, E>>,
+    where
+        F: FnOnce() -> Fut,
+        Fut: IntoFuture<Output = Result<O, E>>,
     {
         Ok(self.present().emit(f().await?))
     }

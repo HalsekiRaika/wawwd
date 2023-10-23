@@ -1,10 +1,8 @@
-use std::collections::BTreeSet;
-use std::net::IpAddr;
+use crate::database::BIND_LIMIT;
+use crate::error::DriverError;
 use async_trait::async_trait;
 use geo_types::Geometry;
 use geozero::wkb::Decode;
-use kernel::repository::InstanceRepository;
-use sqlx::{PgConnection, Pool, Postgres, QueryBuilder};
 use kernel::entities::geology::Position;
 use kernel::entities::instance::{FinishedAt, Instance, InstanceId, RingSet, StartedAt};
 use kernel::entities::location::LocationId;
@@ -12,8 +10,10 @@ use kernel::entities::ring::{CreatedAt, HueColor, Index, Ring, RingId, UserIp};
 use kernel::error::KernelError;
 use kernel::external::time::OffsetDateTime;
 use kernel::external::uuid::Uuid;
-use crate::database::BIND_LIMIT;
-use crate::error::DriverError;
+use kernel::repository::InstanceRepository;
+use sqlx::{PgConnection, Pool, Postgres, QueryBuilder};
+use std::collections::BTreeSet;
+use std::net::IpAddr;
 
 #[derive(Clone)]
 pub struct InstanceDataBase {
@@ -56,13 +56,15 @@ impl InstanceRepository for InstanceDataBase {
         Ok(found)
     }
 
-    async fn find_unfinished(&self, location: &LocationId) -> Result<Option<Instance>, KernelError> {
+    async fn find_unfinished(
+        &self,
+        location: &LocationId,
+    ) -> Result<Option<Instance>, KernelError> {
         let mut con = self.pool.acquire().await.map_err(DriverError::from)?;
         let found = InternalInstanceDataBase::find_unfinished(location, &mut con).await?;
         Ok(found)
     }
 }
-
 
 #[derive(sqlx::FromRow)]
 pub(in crate::database) struct InstanceRow {
@@ -80,7 +82,7 @@ impl TryFrom<InstanceRow> for Instance {
             LocationId::new(value.location),
             RingSet::default(),
             StartedAt::new(value.started_at),
-            FinishedAt::new::<OffsetDateTime>(value.finished_at)
+            FinishedAt::new::<OffsetDateTime>(value.finished_at),
         ))
     }
 }
@@ -92,7 +94,7 @@ pub(in crate::database) struct RingRow {
     hue: i32,
     addr: IpAddr,
     index: i32,
-    created_at: OffsetDateTime
+    created_at: OffsetDateTime,
 }
 
 impl TryFrom<RingRow> for Ring {
@@ -100,11 +102,16 @@ impl TryFrom<RingRow> for Ring {
     fn try_from(value: RingRow) -> Result<Self, Self::Error> {
         Ok(Self::new(
             RingId::new(value.id),
-            Position::try_from(value.pos_in.geometry.ok_or(DriverError::Decoding {column: "pos_in"})?)?,
+            Position::try_from(
+                value
+                    .pos_in
+                    .geometry
+                    .ok_or(DriverError::Decoding { column: "pos_in" })?,
+            )?,
             UserIp::try_from(value.addr)?,
             Index::new(value.index)?,
             HueColor::new(value.hue),
-            CreatedAt::new(value.created_at)
+            CreatedAt::new(value.created_at),
         ))
     }
 }

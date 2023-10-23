@@ -3,8 +3,8 @@ mod instance_id;
 mod ring_set;
 mod started_at;
 
-use std::cmp::Ordering;
 pub use self::{finished_at::*, instance_id::*, ring_set::*, started_at::*};
+use std::cmp::Ordering;
 
 use super::location::LocationId;
 use destructure::Destructure;
@@ -58,7 +58,6 @@ impl Instance {
         &self.finished_at
     }
 }
-
 
 impl Eq for Instance {}
 

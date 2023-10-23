@@ -39,10 +39,7 @@ async fn main() -> anyhow::Result<()> {
                 .patch(routes::upd_location)
                 .delete(routes::del_location),
         )
-        .route("/rings",
-            get(routes::rings)
-                .post(routes::reg_ring)
-        )
+        .route("/rings", get(routes::rings).post(routes::reg_ring))
         .layer(TraceLayer::new_for_http())
         .with_state(handler);
 
