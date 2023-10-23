@@ -56,9 +56,9 @@ impl InstanceRepository for InstanceDataBase {
         Ok(found)
     }
 
-    async fn find_unfinished(&self) -> Result<Option<Instance>, KernelError> {
+    async fn find_unfinished(&self, location: &LocationId) -> Result<Option<Instance>, KernelError> {
         let mut con = self.pool.acquire().await.map_err(DriverError::from)?;
-        let found = InternalInstanceDataBase::find_unfinished(&mut con).await?;
+        let found = InternalInstanceDataBase::find_unfinished(location, &mut con).await?;
         Ok(found)
     }
 }
@@ -243,11 +243,12 @@ impl InternalInstanceDataBase {
     }
 
     #[rustfmt::skip]
-    pub(in crate::database) async fn find_unfinished(con: &mut PgConnection) -> Result<Option<Instance>, DriverError> {
+    pub(in crate::database) async fn find_unfinished(location: &LocationId, con: &mut PgConnection) -> Result<Option<Instance>, DriverError> {
         // language=SQL
         let instance = sqlx::query_as::<_, InstanceRow>(r#"
-            SELECT id, location, started_at, finished_at FROM instances WHERE instances.finished_at IS NULL
+            SELECT id, location, started_at, finished_at FROM instances WHERE instances.finished_at IS NULL AND instances.location = $1
         "#)
+            .bind(location.as_ref())
             .fetch_optional(&mut *con)
             .await?;
 

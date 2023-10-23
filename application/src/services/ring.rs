@@ -39,11 +39,12 @@ pub trait CreateRingService:
             created_at,
         } = create;
 
-        let instance = if let Some(instance) = self.instance_repository().find_unfinished().await? {
+        let location = LocationId::new(location);
+
+        let instance = if let Some(instance) = self.instance_repository().find_unfinished(&location).await? {
             instance
         } else {
             let id = InstanceId::default();
-            let location = LocationId::new(location);
             let rings = RingSet::default();
             let started_at = StartedAt::default();
             let finished_at = FinishedAt::default();
