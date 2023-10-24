@@ -1,4 +1,4 @@
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::{Router, Server};
 use server::{routes, Handler};
 use std::net::SocketAddr;
@@ -6,6 +6,7 @@ use tower_http::trace::TraceLayer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::Layer;
+use server::middleware::simple_auth;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -31,14 +32,18 @@ async fn main() -> anyhow::Result<()> {
 
     let handler = Handler::init().await?;
 
-    let app = Router::new()
+    let admin = Router::new()
         .route(
-            "/locations",
-            get(routes::locations)
-                .post(routes::reg_location)
+            "/",
+                post(routes::reg_location)
                 .patch(routes::upd_location)
                 .delete(routes::del_location),
         )
+        .route_layer(axum::middleware::from_fn_with_state(handler.clone(), simple_auth));
+
+    let app = Router::new()
+        .route("/locations", get(routes::locations))
+        .nest("/locations", admin)
         .route("/rings", get(routes::rings).post(routes::reg_ring))
         .layer(TraceLayer::new_for_http())
         .with_state(handler);

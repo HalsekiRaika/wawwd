@@ -5,12 +5,15 @@ use application::services::{
 };
 use driver::database::{InstanceDataBase, LocationDataBase};
 use driver::DataBaseInitializer;
+use driver::security::AuthorizeInMemoryInstance;
 use kernel::repository::{DependOnInstanceRepository, DependOnLocationRepository};
+use kernel::security::DependOnAuthorizeAdminPolicy;
 
 #[derive(Clone)]
 pub struct Handler {
     loc: LocationDataBase,
     ins: InstanceDataBase,
+    auth: AuthorizeInMemoryInstance,
 }
 
 impl Handler {
@@ -19,12 +22,19 @@ impl Handler {
         let pg_url = dotenvy::var("PG_DATABASE_URL")
             .map_err(|_| ServerError::EnvError(r#"PG_DATABASE_URL"#))?;
 
+        let one_time = kernel::entities::token::AdminToken::default();
+        tracing::info!("+ Admin Token generated.");
+        tracing::info!("| * {:?}", one_time);
+        tracing::info!("| This token is available as long as this instance is active,");
+        tracing::info!("+ but is immediately discarded and a new token is regenerated when it is restarted.");
+
         let pg_pool = DataBaseInitializer::setup(pg_url).await?;
 
         let loc = LocationDataBase::new(pg_pool.clone());
         let ins = InstanceDataBase::new(pg_pool);
+        let auth = AuthorizeInMemoryInstance::new(one_time);
 
-        Ok(Self { loc, ins })
+        Ok(Self { loc, ins, auth })
     }
 }
 
@@ -82,5 +92,12 @@ impl DependOnUpdateInstanceService for Handler {
     type UpdateInstanceService = Self;
     fn update_instance_service(&self) -> &Self::UpdateInstanceService {
         self
+    }
+}
+
+impl DependOnAuthorizeAdminPolicy for Handler {
+    type AuthorizeAdminPolicy = AuthorizeInMemoryInstance;
+    fn authorize_admin_policy(&self) -> &Self::AuthorizeAdminPolicy {
+        &self.auth
     }
 }
