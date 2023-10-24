@@ -17,6 +17,7 @@ serde_json = { version = "1", features = ["raw_value"] }
 geojson = "0.24"
 geo-types = "0.7"
 orbital = "0.1"
+rand = "0.8.5"
 
 thiserror = { workspace = true }
 anyhow =  { workspace = true }
