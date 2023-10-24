@@ -8,7 +8,7 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-destructure = "0.1.2"
+destructure = "0.2.0"
 async-trait = "0.1"
 uuid = { version = "1.4", features = ["serde", "v4"] }
 time = { version = "0.3", features = ["serde", "formatting", "parsing"] }
