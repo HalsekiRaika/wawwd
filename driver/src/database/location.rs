@@ -316,7 +316,7 @@ mod tests {
         let rad = Radius::new(100);
         let loc = vec![
             ("jp", "愛媛県庁第一別館"),
-            ("en", "Ehime Prefectural Office Branch Office"),
+            ("en", "Ehime Prefecture Office Branch Office"),
         ]
         .into_iter()
         .map(|(c, n)| Localize::new(c, n))

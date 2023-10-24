@@ -42,13 +42,11 @@ pub trait UpdateInstanceService: 'static + Sync + Send + DependOnInstanceReposit
             });
         };
 
-        let mut before = before.into_destruct();
         let after = update.into_destruct();
-
-        before.rings = after.rings;
-        before.finished_at = after.finished_at;
-
-        let instance = before.freeze();
+        let instance = before.reconstruct(|dest| {
+            dest.rings = after.rings;
+            dest.finished_at = after.finished_at;
+        });
 
         self.instance_repository().update(&instance).await?;
 
