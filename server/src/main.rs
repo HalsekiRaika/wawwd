@@ -1,6 +1,6 @@
 use axum::routing::{get, post};
 use axum::{Router, Server};
-use server::{routes, Handler};
+use server::{routes, AppHandler};
 use std::net::SocketAddr;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::layer::SubscriberExt;
@@ -30,7 +30,7 @@ async fn main() -> anyhow::Result<()> {
         )
         .init();
 
-    let handler = Handler::init().await?;
+    let handler = AppHandler::init().await?;
 
     let admin = Router::new()
         .route(

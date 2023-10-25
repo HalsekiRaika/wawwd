@@ -5,7 +5,7 @@ use crate::controller::{
 };
 use crate::error::ServerError;
 use crate::extract::GeoJson;
-use crate::Handler;
+use crate::AppHandler;
 use application::services::{
     CreateLocationService, DeleteLocationService, DependOnCreateLocationService,
     DependOnDeleteLocationService, DependOnUpdateLocationService, UpdateLocationService,
@@ -18,7 +18,7 @@ use axum::Json;
 use geojson::{Feature, FeatureCollection};
 use kernel::repository::{DependOnLocationRepository, LocationRepository};
 
-pub async fn locations(State(handler): State<Handler>) -> Result<impl IntoResponse, ServerError> {
+pub async fn locations(State(handler): State<AppHandler>) -> Result<impl IntoResponse, ServerError> {
     let all = handler
         .location_repository()
         .find_all()
@@ -32,7 +32,7 @@ pub async fn locations(State(handler): State<Handler>) -> Result<impl IntoRespon
 }
 
 pub async fn reg_location(
-    State(handler): State<Handler>,
+    State(handler): State<AppHandler>,
     GeoJson(geojson): GeoJson,
 ) -> Result<impl IntoResponse, ServerError> {
     Controller::new(GeoJsonToCreateLocationDto, ())
@@ -46,7 +46,7 @@ pub async fn reg_location(
 }
 
 pub async fn upd_location(
-    State(handler): State<Handler>,
+    State(handler): State<AppHandler>,
     GeoJson(geojson): GeoJson,
 ) -> Result<impl IntoResponse, ServerError> {
     Controller::new(GeoJsonToUpdateLocationDto, ())
@@ -60,7 +60,7 @@ pub async fn upd_location(
 }
 
 pub async fn del_location(
-    State(handler): State<Handler>,
+    State(handler): State<AppHandler>,
     Json(user_input): Json<DeleteRequest>,
 ) -> Result<impl IntoResponse, ServerError> {
     Controller::new(DeleteRequestToDeleteLocationDto, ())

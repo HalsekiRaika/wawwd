@@ -8,10 +8,10 @@ use axum::TypedHeader;
 use kernel::entities::token::AdminToken;
 use kernel::security::{AuthorizeAdminPolicy, DependOnAuthorizeAdminPolicy};
 use crate::error::ServerError;
-use crate::Handler;
+use crate::AppHandler;
 
 pub async fn simple_auth<B>(
-    State(handler): State<Handler>,
+    State(handler): State<AppHandler>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     request: Request<B>,
     next: Next<B>

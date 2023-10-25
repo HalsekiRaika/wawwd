@@ -1,3 +1,5 @@
+use std::ops::Deref;
+use std::sync::Arc;
 use crate::error::ServerError;
 use application::services::{
     DependOnCreateInstanceService, DependOnCreateLocationService, DependOnCreateRingService,
@@ -9,7 +11,31 @@ use driver::security::AuthorizeInMemoryInstance;
 use kernel::repository::{DependOnInstanceRepository, DependOnLocationRepository};
 use kernel::security::DependOnAuthorizeAdminPolicy;
 
-#[derive(Clone)]
+pub struct AppHandler {
+    inner: Arc<Handler>,
+}
+
+impl AppHandler {
+    pub async fn init() -> Result<AppHandler, ServerError> {
+        Ok(Self { inner: Arc::new(Handler::init().await?) })
+    }
+}
+
+impl Clone for AppHandler {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+        }
+    }
+}
+
+impl Deref for AppHandler {
+    type Target = Handler;
+    fn deref(&self) -> &Self::Target {
+        self.inner.as_ref()
+    }
+}
+
 pub struct Handler {
     loc: LocationDataBase,
     ins: InstanceDataBase,
@@ -18,7 +44,7 @@ pub struct Handler {
 
 impl Handler {
     #[allow(dead_code)]
-    pub async fn init() -> Result<Self, ServerError> {
+    async fn init() -> Result<Self, ServerError> {
         let pg_url = dotenvy::var("PG_DATABASE_URL")
             .map_err(|_| ServerError::EnvError(r#"PG_DATABASE_URL"#))?;
 

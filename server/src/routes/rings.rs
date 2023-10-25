@@ -7,7 +7,7 @@ use crate::controller::{
     SelectionIdToInstanceId,
 };
 use crate::error::ServerError;
-use crate::Handler;
+use crate::AppHandler;
 use application::services::{CreateRingService, DependOnCreateRingService};
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
@@ -18,7 +18,7 @@ use serde::Serialize;
 use std::collections::BTreeSet;
 
 pub async fn rings(
-    State(handler): State<Handler>,
+    State(handler): State<AppHandler>,
     Query(query): Query<SelectionQuery>,
 ) -> Result<impl IntoResponse, ServerError> {
     #[derive(Serialize)]
@@ -48,7 +48,7 @@ pub async fn rings(
 }
 
 pub async fn reg_ring(
-    State(handler): State<Handler>,
+    State(handler): State<AppHandler>,
     Json(ctx): Json<CreateRingRequest>,
 ) -> Result<impl IntoResponse, ServerError> {
     let res = Controller::new(RequestToCreateRingDto, RingDtoToResponseJson)
