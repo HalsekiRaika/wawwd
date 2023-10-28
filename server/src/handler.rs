@@ -62,7 +62,7 @@ impl Handler {
 
         let anonymous = dotenvy::var("S3_ANONYMOUS")
             .map(|v| v.parse::<bool>().unwrap_or(false))
-            .map_err(|_| ServerError::EnvError(r#"S3_ANONYMOUS"#))?;
+            .unwrap_or(false);
 
         let creds = if anonymous {
             tracing::warn!("+ S3_ANONYMOUS is true. This is not secured.");
@@ -90,7 +90,7 @@ impl Handler {
 
         let use_localstack = dotenvy::var("S3_USE_LOCALSTACK")
             .map(|v| v.parse::<bool>().unwrap_or(false))
-            .map_err(|_| ServerError::EnvError(r#"S3_USE_LOCALSTACK"#))?;
+            .unwrap_or(false);
 
         let s3_bucket = if use_localstack {
             DataBaseInitializer::setup_localstack(bucket_name, creds).await

@@ -4,7 +4,7 @@ use axum::{Router, Server};
 use server::middleware::simple_auth;
 use server::{routes, AppHandler};
 use std::net::SocketAddr;
-use tower_http::trace::TraceLayer;
+use tower_http::{cors::{CorsLayer, Any}, trace::TraceLayer};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::Layer;
@@ -49,11 +49,14 @@ async fn main() -> anyhow::Result<()> {
         .route("/", post(routes::reg_images))
         .layer(DefaultBodyLimit::disable());
 
+    let socket = Router::new()
+        .route("/", get(routes::socket::ws_handler));
+
     let app = Router::new()
         .route("/locations", get(routes::locations))
         .nest("/locations", admin)
         .route("/rings", get(routes::rings).post(routes::reg_ring))
-        .route("/ws-rings", get(routes::socket::ws_handler))
+        .nest("/ws-rings", socket)
         .nest("/images", image)
         .layer(TraceLayer::new_for_http())
         .with_state(handler);
