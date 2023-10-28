@@ -33,6 +33,12 @@ async fn main() -> anyhow::Result<()> {
 
     let handler = AppHandler::init().await?;
 
+    let cors = CorsLayer::new()
+        .allow_methods(Any)
+        .allow_headers(Any)
+        .allow_origin(Any);
+
+
     let admin = Router::new()
         .route(
             "/",
@@ -59,6 +65,7 @@ async fn main() -> anyhow::Result<()> {
         .nest("/ws-rings", socket)
         .nest("/images", image)
         .layer(TraceLayer::new_for_http())
+        .layer(cors)
         .with_state(handler);
 
     let bind = SocketAddr::from(([0, 0, 0, 0], 3854));
