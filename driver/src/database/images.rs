@@ -27,6 +27,12 @@ impl ImageRepository for ImageDataBase {
         Ok(())
     }
 
+    async fn delete(&self, id: &RingId) -> Result<(), KernelError> {
+        let mut con = self.pool.acquire().await.map_err(DriverError::from)?;
+        ImageDataBaseInternalProcessor::delete(id, &mut con).await?;
+        Ok(())
+    }
+
     async fn find_by_id(&self, id: &RingId) -> Result<Option<Image>, KernelError> {
         let mut con = self.pool.acquire().await.map_err(DriverError::from)?;
         let found = ImageDataBaseInternalProcessor::find_by_id(id, &mut con).await?;
@@ -64,6 +70,17 @@ impl ImageDataBaseInternalProcessor {
             .bind(create.id().as_ref())
             .bind(create.bin().as_ref())
             .bind(create.created_at().as_ref())
+            .execute(&mut *con)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn delete(id: &RingId, con: &mut PgConnection) -> Result<(), DriverError> {
+        // language=SQL
+        sqlx::query(r#"
+            DELETE FROM images WHERE id = $1
+        "#)
+            .bind(id.as_ref())
             .execute(&mut *con)
             .await?;
         Ok(())

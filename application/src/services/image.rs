@@ -43,9 +43,10 @@ pub trait ExportImageService:
 
         self.image_repository().create(&image).await?;
 
-        self.image_export_external_storage_service()
-            .export(&image)
-            .await?;
+        if let Err(e) = self.image_export_external_storage_service().export(&image).await {
+            self.image_repository().delete(image.id()).await?;
+            return Err(e.into());
+        }
 
         Ok(image.into())
     }
