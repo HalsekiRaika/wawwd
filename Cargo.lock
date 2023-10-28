@@ -1886,6 +1886,7 @@ dependencies = [
  "geojson",
  "kernel",
  "mime",
+ "once_cell",
  "serde",
  "serde_json",
  "thiserror",
