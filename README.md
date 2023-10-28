@@ -9,6 +9,10 @@ Set Environment Variable
 ```shell
 touch .env.docker
 echo "PG_DATABASE_URL=postgresql://wawwd123:wawwd456@postgres_db:5432/wawwd" >> .env.docker
+echo "S3_BUCKET_NAME=<bucket_name>" >> .env.docker
+echo "S3_BUCKET_REGION=<bucket_region>" >> .env.docker
+echo "S3_ANONYMOUS=<boolean: default false>" >> .env.docker
+echo "S3_USE_LOCALSTACK=<boolean: default false>" >> .env.docker
 ```
 
 Run On

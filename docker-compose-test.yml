@@ -29,6 +29,17 @@ services:
     hostname: pgadmin
     depends_on:
       - postgres_db
+  localstack:
+    image: localstack/localstack
+    ports:
+      - "127.0.0.1:4566:4566"
+      - "127.0.0.1:4510-4559:4510-4559"
+    environment:
+      - DEBUG=1
+      - LS_LOG=trace
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
 
 volumes:
   db-data:

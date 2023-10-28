@@ -1,7 +1,9 @@
 pub mod entities;
 pub mod error;
+pub mod finder;
 pub mod repository;
 pub mod security;
+pub mod service;
 
 #[cfg(feature = "time")]
 #[cfg(feature = "uuid")]

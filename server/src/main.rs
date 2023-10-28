@@ -1,12 +1,13 @@
+use axum::extract::DefaultBodyLimit;
 use axum::routing::{get, post};
 use axum::{Router, Server};
+use server::middleware::simple_auth;
 use server::{routes, AppHandler};
 use std::net::SocketAddr;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::Layer;
-use server::middleware::simple_auth;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -17,10 +18,10 @@ async fn main() -> anyhow::Result<()> {
             tracing_subscriber::fmt::layer()
                 .with_filter(tracing_subscriber::EnvFilter::new(
                     std::env::var("RUST_LOG").unwrap_or_else(|_| {
-                        "driver=debug,server=debug,tower_http=debug,hyper=debug,sqlx=debug".into()
+                        "driver=debug,server=debug,tower_http=trace,hyper=trace,sqlx=debug".into()
                     }),
                 ))
-                .with_filter(tracing_subscriber::filter::LevelFilter::DEBUG),
+                .with_filter(tracing_subscriber::filter::LevelFilter::TRACE),
         )
         .with(
             tracing_subscriber::fmt::Layer::default()
@@ -35,16 +36,25 @@ async fn main() -> anyhow::Result<()> {
     let admin = Router::new()
         .route(
             "/",
-                post(routes::reg_location)
+            post(routes::reg_location)
                 .patch(routes::upd_location)
                 .delete(routes::del_location),
         )
-        .route_layer(axum::middleware::from_fn_with_state(handler.clone(), simple_auth));
+        .route_layer(axum::middleware::from_fn_with_state(
+            handler.clone(),
+            simple_auth,
+        ));
+
+    let image = Router::new()
+        .route("/", post(routes::reg_images))
+        .layer(DefaultBodyLimit::disable());
 
     let app = Router::new()
         .route("/locations", get(routes::locations))
         .nest("/locations", admin)
         .route("/rings", get(routes::rings).post(routes::reg_ring))
+        .route("/ws-rings", get(routes::socket::ws_handler))
+        .nest("/images", image)
         .layer(TraceLayer::new_for_http())
         .with_state(handler);
 
@@ -54,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("Server listening on {}", bind.to_string());
 
     Server::bind(&bind)
-        .serve(app.into_make_service())
+        .serve(app.into_make_service_with_connect_info::<SocketAddr>())
         .with_graceful_shutdown(exit())
         .await?;
 

@@ -18,7 +18,9 @@ use axum::Json;
 use geojson::{Feature, FeatureCollection};
 use kernel::repository::{DependOnLocationRepository, LocationRepository};
 
-pub async fn locations(State(handler): State<AppHandler>) -> Result<impl IntoResponse, ServerError> {
+pub async fn locations(
+    State(handler): State<AppHandler>,
+) -> Result<impl IntoResponse, ServerError> {
     let all = handler
         .location_repository()
         .find_all()

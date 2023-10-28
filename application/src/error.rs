@@ -20,7 +20,8 @@ impl From<KernelError> for ApplicationError {
             KernelError::Validation { .. }
             | KernelError::TryConversion { .. }
             | KernelError::UnSupportedTypeConversion { .. }
-            | KernelError::Conflict { .. } => Self::Kernel(anyhow::Error::new(value)),
+            | KernelError::Conflict { .. }
+            | KernelError::InvalidFormat { .. } => Self::Kernel(anyhow::Error::new(value)),
             KernelError::Driver(e) => Self::Other(e),
             KernelError::Internal(e) => Self::Other(e),
         }

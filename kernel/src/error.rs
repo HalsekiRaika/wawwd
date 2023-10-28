@@ -18,6 +18,11 @@ pub enum KernelError {
         from: &'static str,
         to: &'static str,
     },
+    #[error("Invalid format. {msg}")]
+    InvalidFormat {
+        ty: &'static str,
+        msg: anyhow::Error,
+    },
     #[error(transparent)]
     Driver(anyhow::Error),
     #[error(transparent)]

@@ -5,7 +5,7 @@ use kernel::security::AuthorizeAdminPolicy;
 
 #[derive(Clone)]
 pub struct AuthorizeInMemoryInstance {
-    token: AdminToken
+    token: AdminToken,
 }
 
 impl AuthorizeInMemoryInstance {
@@ -18,7 +18,7 @@ impl AuthorizeInMemoryInstance {
 impl AuthorizeAdminPolicy for AuthorizeInMemoryInstance {
     async fn authorize(&self, token: &AdminToken) -> Result<(), KernelError> {
         if self.token.eq(token) {
-            return Ok(())
+            return Ok(());
         }
         Err(KernelError::Validation {
             msg: "Invalid authorize token.",

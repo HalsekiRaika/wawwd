@@ -1,5 +1,6 @@
 use crate::error::KernelError;
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 use time::format_description::well_known::Iso8601;
 use time::OffsetDateTime;
 
@@ -37,5 +38,19 @@ impl From<CreatedAt> for OffsetDateTime {
 impl Default for CreatedAt {
     fn default() -> Self {
         Self(OffsetDateTime::now_utc())
+    }
+}
+
+impl Display for CreatedAt {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.0
+                .format(time::macros::format_description!(
+                    "[year]-[month]-[day]-[hour]-[minute]-[second]"
+                ))
+                .map_err(|_| std::fmt::Error)?
+        )
     }
 }

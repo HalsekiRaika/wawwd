@@ -8,16 +8,17 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-destructure = "0.2.0"
+destructure = "0.3.0"
 async-trait = "0.1"
 uuid = { version = "1.4", features = ["serde", "v4"] }
-time = { version = "0.3", features = ["serde", "formatting", "parsing"] }
+time = { version = "0.3", features = ["serde", "formatting", "parsing", "macros"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["raw_value"] }
 geojson = "0.24"
 geo-types = "0.7"
 orbital = "0.1"
 rand = "0.8.5"
+base64 = "0.21"
 
 thiserror = { workspace = true }
 anyhow =  { workspace = true }

@@ -1,15 +1,21 @@
-use std::ops::Deref;
-use std::sync::Arc;
 use crate::error::ServerError;
 use application::services::{
     DependOnCreateInstanceService, DependOnCreateLocationService, DependOnCreateRingService,
-    DependOnDeleteLocationService, DependOnUpdateInstanceService, DependOnUpdateLocationService,
+    DependOnDeleteLocationService, DependOnExportImageService, DependOnUpdateInstanceService,
+    DependOnUpdateLocationService,
 };
-use driver::database::{InstanceDataBase, LocationDataBase};
-use driver::DataBaseInitializer;
+use driver::database::{ImageDataBase, InstanceDataBase, LocationDataBase, RingDataBase};
 use driver::security::AuthorizeInMemoryInstance;
-use kernel::repository::{DependOnInstanceRepository, DependOnLocationRepository};
+use driver::service::S3ImageStorageService;
+use driver::{DataBaseInitializer, S3Credentials};
+use kernel::finder::DependOnRingFinder;
+use kernel::repository::{
+    DependOnImageRepository, DependOnInstanceRepository, DependOnLocationRepository,
+};
 use kernel::security::DependOnAuthorizeAdminPolicy;
+use kernel::service::DependOnImageExportExternalStorageService;
+use std::ops::Deref;
+use std::sync::Arc;
 
 pub struct AppHandler {
     inner: Arc<Handler>,
@@ -17,7 +23,9 @@ pub struct AppHandler {
 
 impl AppHandler {
     pub async fn init() -> Result<AppHandler, ServerError> {
-        Ok(Self { inner: Arc::new(Handler::init().await?) })
+        Ok(Self {
+            inner: Arc::new(Handler::init().await?),
+        })
     }
 }
 
@@ -39,7 +47,11 @@ impl Deref for AppHandler {
 pub struct Handler {
     loc: LocationDataBase,
     ins: InstanceDataBase,
+    img: ImageDataBase,
+    ring: RingDataBase,
     auth: AuthorizeInMemoryInstance,
+
+    s3_images: S3ImageStorageService,
 }
 
 impl Handler {
@@ -48,19 +60,60 @@ impl Handler {
         let pg_url = dotenvy::var("PG_DATABASE_URL")
             .map_err(|_| ServerError::EnvError(r#"PG_DATABASE_URL"#))?;
 
+        let anonymous = dotenvy::var("S3_ANONYMOUS")
+            .map(|v| v.parse::<bool>().unwrap_or(false))
+            .map_err(|_| ServerError::EnvError(r#"S3_ANONYMOUS"#))?;
+
+        let creds = if anonymous {
+            tracing::warn!("+ S3_ANONYMOUS is true. This is not secured.");
+            S3Credentials::anonymous()
+        } else {
+            S3Credentials::from_env()
+        }
+        .map_err(|e| ServerError::Driver(anyhow::Error::new(e)))?;
+
+        let bucket_name = dotenvy::var("S3_BUCKET_NAME")
+            .map_err(|_| ServerError::EnvError(r#"S3_BUCKET_NAME"#))?;
+
+        let bucket_region = dotenvy::var("S3_BUCKET_REGION")
+            .map_err(|_| ServerError::EnvError(r#"S3_BUCKET_REGION"#))?;
+
         let one_time = kernel::entities::token::AdminToken::default();
         tracing::info!("+ Admin Token generated.");
         tracing::info!("| * {:?}", one_time);
         tracing::info!("| This token is available as long as this instance is active,");
-        tracing::info!("+ but is immediately discarded and a new token is regenerated when it is restarted.");
+        tracing::info!(
+            "+ but is immediately discarded and a new token is regenerated when it is restarted."
+        );
 
-        let pg_pool = DataBaseInitializer::setup(pg_url).await?;
+        let pg_pool = DataBaseInitializer::setup_postgres(pg_url).await?;
+
+        let use_localstack = dotenvy::var("S3_USE_LOCALSTACK")
+            .map(|v| v.parse::<bool>().unwrap_or(false))
+            .map_err(|_| ServerError::EnvError(r#"S3_USE_LOCALSTACK"#))?;
+
+        let s3_bucket = if use_localstack {
+            DataBaseInitializer::setup_localstack(bucket_name, creds).await
+        } else {
+            DataBaseInitializer::setup_s3(bucket_name, bucket_region, creds).await
+        }?;
 
         let loc = LocationDataBase::new(pg_pool.clone());
-        let ins = InstanceDataBase::new(pg_pool);
+        let ins = InstanceDataBase::new(pg_pool.clone());
+        let img = ImageDataBase::new(pg_pool.clone());
+        let ring = RingDataBase::new(pg_pool);
         let auth = AuthorizeInMemoryInstance::new(one_time);
 
-        Ok(Self { loc, ins, auth })
+        let s3_images = S3ImageStorageService::new(s3_bucket);
+
+        Ok(Self {
+            loc,
+            ins,
+            img,
+            ring,
+            auth,
+            s3_images,
+        })
     }
 }
 
@@ -125,5 +178,33 @@ impl DependOnAuthorizeAdminPolicy for Handler {
     type AuthorizeAdminPolicy = AuthorizeInMemoryInstance;
     fn authorize_admin_policy(&self) -> &Self::AuthorizeAdminPolicy {
         &self.auth
+    }
+}
+
+impl DependOnRingFinder for Handler {
+    type RingFinder = RingDataBase;
+    fn ring_finder(&self) -> &Self::RingFinder {
+        &self.ring
+    }
+}
+
+impl DependOnImageExportExternalStorageService for Handler {
+    type ImageExportExternalStorageService = S3ImageStorageService;
+    fn image_export_external_storage_service(&self) -> &Self::ImageExportExternalStorageService {
+        &self.s3_images
+    }
+}
+
+impl DependOnImageRepository for Handler {
+    type ImageRepository = ImageDataBase;
+    fn image_repository(&self) -> &Self::ImageRepository {
+        &self.img
+    }
+}
+
+impl DependOnExportImageService for Handler {
+    type ExportImageService = Self;
+    fn export_image_service(&self) -> &Self::ExportImageService {
+        self
     }
 }

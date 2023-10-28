@@ -17,7 +17,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["raw_value"] }
 geozero = { version = "0.11", features = ["with-postgis-sqlx"]}
 geo-types = "0.7"
-
+rust-s3 = { version = "0.33", features = ["tokio", "tokio-native-tls"] }
 thiserror = { workspace = true }
 anyhow =  { workspace = true }
 

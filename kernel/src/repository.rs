@@ -1,4 +1,5 @@
+mod image;
 mod instance;
 mod location;
 
-pub use self::{instance::*, location::*};
+pub use self::{image::*, instance::*, location::*};
