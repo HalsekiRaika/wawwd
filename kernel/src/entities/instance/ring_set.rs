@@ -97,36 +97,33 @@ impl From<RingSet> for BTreeSet<Ring> {
 mod tests {
     use crate::entities::geology::Position;
     use crate::entities::instance::RingSet;
-    use crate::entities::ring::{CreatedAt, HueColor, Index, Ring, RingId, UserId, UserIp};
+    use crate::entities::ring::{CreatedAt, HueColor, Index, Ring, RingId, UserId};
 
     #[test]
     fn ord_test() -> anyhow::Result<()> {
         let id = RingId::default();
         let pos = Position::new(135, 84)?;
-        let addr = UserIp::new("192.168.0.1")?;
         let user = UserId::default();
         let index = Index::new(12)?;
         let color = HueColor::new(100);
         let created_at = CreatedAt::default();
-        let ring1 = Ring::new(id, pos, addr, user, index, color, created_at);
+        let ring1 = Ring::new(id, pos, user, index, color, created_at);
 
         let id = RingId::default();
         let pos = Position::new(135, 83)?;
-        let addr = UserIp::new("192.168.0.2")?;
         let user = UserId::default();
         let index = Index::new(12)?;
         let color = HueColor::new(100);
         let created_at = CreatedAt::default();
-        let ring2 = Ring::new(id, pos, addr, user, index, color, created_at);
+        let ring2 = Ring::new(id, pos, user, index, color, created_at);
 
         let id = RingId::default();
         let pos = Position::new(135, 82)?;
-        let addr = UserIp::new("192.168.0.3")?;
         let index = Index::new(13)?;
         let user = UserId::default();
         let color = HueColor::new(100);
         let created_at = CreatedAt::default();
-        let ring3 = Ring::new(id, pos, addr, user, index, color, created_at);
+        let ring3 = Ring::new(id, pos, user, index, color, created_at);
 
         let v = vec![ring1, ring3, ring2];
 

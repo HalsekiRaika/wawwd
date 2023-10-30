@@ -2,10 +2,9 @@ mod created_at;
 mod hue;
 mod index;
 mod ring_id;
-mod user_addr;
 mod user_id;
 
-pub use self::{created_at::*, hue::*, index::*, ring_id::*, user_addr::*, user_id::*};
+pub use self::{created_at::*, hue::*, index::*, ring_id::*, user_id::*};
 
 use crate::entities::geology::Position;
 use destructure::Destructure;
@@ -16,7 +15,6 @@ use std::cmp::Ordering;
 pub struct Ring {
     id: RingId,
     pos_in: Position,
-    addr: UserIp,
     user: UserId,
     index: Index,
     color: HueColor,
@@ -27,7 +25,6 @@ impl Ring {
     pub fn new(
         id: RingId,
         pos_in: Position,
-        addr: UserIp,
         user: UserId,
         index: Index,
         color: HueColor,
@@ -36,7 +33,6 @@ impl Ring {
         Self {
             id,
             pos_in,
-            addr,
             user,
             index,
             color,
@@ -52,10 +48,6 @@ impl Ring {
 
     pub fn pos_in(&self) -> &Position {
         &self.pos_in
-    }
-
-    pub fn addr(&self) -> &UserIp {
-        &self.addr
     }
 
     pub fn user(&self) -> &UserId {
@@ -98,12 +90,6 @@ impl PartialEq<CreatedAt> for Ring {
 impl PartialEq<UserId> for Ring {
     fn eq(&self, other: &UserId) -> bool {
         self.user.eq(other)
-    }
-}
-
-impl PartialEq<UserIp> for Ring {
-    fn eq(&self, other: &UserIp) -> bool {
-        self.addr.eq(other)
     }
 }
 
