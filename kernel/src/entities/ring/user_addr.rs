@@ -4,6 +4,7 @@ use std::fmt::{Display, Formatter};
 use std::net::{IpAddr, Ipv4Addr};
 use std::str::FromStr;
 
+#[deprecated]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Deserialize, Serialize)]
 pub struct UserIp(IpAddr);
 
