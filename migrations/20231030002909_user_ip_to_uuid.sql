@@ -1,0 +1,2 @@
+ALTER TABLE rings DROP COLUMN addr;
+ALTER TABLE rings ADD  COLUMN user_id UUID;
