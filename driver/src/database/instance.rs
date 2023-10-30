@@ -6,14 +6,13 @@ use geozero::wkb::Decode;
 use kernel::entities::geology::Position;
 use kernel::entities::instance::{FinishedAt, Instance, InstanceId, RingSet, StartedAt};
 use kernel::entities::location::LocationId;
-use kernel::entities::ring::{CreatedAt, HueColor, Index, Ring, RingId, UserIp};
+use kernel::entities::ring::{CreatedAt, HueColor, Index, Ring, RingId, UserId};
 use kernel::error::KernelError;
 use kernel::external::time::OffsetDateTime;
 use kernel::external::uuid::Uuid;
 use kernel::repository::InstanceRepository;
 use sqlx::{PgConnection, Pool, Postgres, QueryBuilder};
 use std::collections::BTreeSet;
-use std::net::IpAddr;
 
 #[derive(Clone)]
 pub struct InstanceDataBase {
@@ -92,7 +91,7 @@ pub(in crate::database) struct RingRow {
     id: Uuid,
     pos_in: Decode<Geometry>,
     hue: i32,
-    addr: IpAddr,
+    user_id: Uuid,
     index: i32,
     created_at: OffsetDateTime,
 }
@@ -108,7 +107,7 @@ impl TryFrom<RingRow> for Ring {
                     .geometry
                     .ok_or(DriverError::Decoding { column: "pos_in" })?,
             )?,
-            UserIp::try_from(value.addr)?,
+            UserId::new(value.user_id),
             Index::new(value.index)?,
             HueColor::new(value.hue),
             CreatedAt::new(value.created_at),
@@ -156,7 +155,7 @@ impl InternalInstanceDataBase {
 
         let mut query: QueryBuilder<Postgres> = QueryBuilder::new(r#"
             INSERT INTO rings (
-              id, instance, pos_in, hue, addr, index, created_at
+              id, instance, pos_in, hue, user_id, index, created_at
             )
         "#);
 
@@ -168,7 +167,7 @@ impl InternalInstanceDataBase {
                 .push_bind(ring.pos_in().y().as_ref())
                 .push_unseparated(r#"), 4326)"#)
                 .push_bind(ring.color().as_ref())
-                .push_bind(ring.addr().as_ref())
+                .push_bind(ring.user().as_ref())
                 .push_bind(ring.index().as_ref())
                 .push_bind(ring.created_at().as_ref());
         });
@@ -221,7 +220,7 @@ impl InternalInstanceDataBase {
 
         // language=SQL
         let r_row = sqlx::query_as::<_, RingRow>(r#"
-            SELECT id, pos_in::GEOMETRY, hue, addr, index, created_at FROM rings WHERE instance = $1
+            SELECT id, pos_in::GEOMETRY, hue, user_id, index, created_at FROM rings WHERE instance = $1
         "#)
             .bind(id.as_ref())
             .fetch_all(&mut *con)
@@ -230,11 +229,11 @@ impl InternalInstanceDataBase {
             .map(|row| -> Result<Ring, KernelError> {
                 let id = RingId::new(row.id);
                 let pos_in = Position::try_from(row.pos_in.geometry.unwrap())?;
-                let addr = UserIp::new(row.addr.to_string())?;
+                let user = UserId::new(row.user_id);
                 let index = Index::new(row.index)?;
                 let color = HueColor::new(row.hue);
                 let created_at = CreatedAt::new(row.created_at);
-                Ok(Ring::new(id, pos_in, addr, index, color, created_at))
+                Ok(Ring::new(id, pos_in, user, index, color, created_at))
             })
             .collect::<Result<Vec<_>, KernelError>>()?;
 
@@ -262,7 +261,7 @@ impl InternalInstanceDataBase {
         let rings = if let Some(instance) = &instance {
             // language=SQL
             sqlx::query_as::<_, RingRow>(r#"
-                SELECT id, instance, pos_in::GEOMETRY, hue, addr, index, created_at FROM rings WHERE instance = $1
+                SELECT id, instance, pos_in::GEOMETRY, hue, user_id, index, created_at FROM rings WHERE instance = $1
             "#)
                 .bind(instance.id)
                 .fetch_all(&mut *con)

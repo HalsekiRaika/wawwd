@@ -33,7 +33,7 @@ impl RingDataBaseInternalProcessor {
         // language=SQL
         let row = sqlx::query_as::<_, RingRow>(r#"
             SELECT
-                id, instance, pos_in::GEOMETRY, hue, addr, index, created_at
+                id, instance, pos_in::GEOMETRY, hue, user_id, index, created_at
             FROM
                 rings
             WHERE
