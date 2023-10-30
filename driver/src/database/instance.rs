@@ -276,11 +276,10 @@ impl InternalInstanceDataBase {
 
         let found = instance.map(TryInto::try_into)
             .transpose()?
-            .map(|ins: Instance| ins.into_destruct())
-            .map(|mut ins| -> Result<Instance, KernelError> {
-                ins.rings = RingSet::new(rings)?;
-                Ok(ins.freeze())
-            })
+            .map(|ins: Instance| ins.try_reconstruct(|dest| -> Result<(), KernelError> {
+                dest.rings = RingSet::new(rings)?;
+                Ok(())
+            }))
             .transpose()?;
 
         Ok(found)
