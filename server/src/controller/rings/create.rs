@@ -15,7 +15,7 @@ impl Intake<CreateRingRequest> for RequestToCreateRingDto {
             latitude: input.latitude,
             indexed: input.indexed,
             hue: input.hue,
-            address: input.address,
+            user: input.user,
             created_at: input.created_at,
         }
     }
@@ -41,7 +41,7 @@ pub struct CreateRingRequest {
     pub latitude: f64,
     pub indexed: i32,
     pub hue: i32,
-    pub address: String,
+    pub user: Uuid,
     #[serde(with = "kernel::external::time::serde::iso8601")]
     pub created_at: OffsetDateTime,
 }
