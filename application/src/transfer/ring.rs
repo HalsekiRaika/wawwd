@@ -12,7 +12,7 @@ pub struct RingDto {
     pub latitude: f64,
     pub indexed: i32,
     pub hue: i32,
-    pub address: String,
+    pub user: Uuid,
     pub created_at: OffsetDateTime,
 }
 
@@ -24,7 +24,7 @@ impl From<(Instance, Ring)> for RingDto {
         let DestructRing {
             id,
             pos_in,
-            addr,
+            user,
             index,
             color,
             created_at,
@@ -38,7 +38,7 @@ impl From<(Instance, Ring)> for RingDto {
             latitude: y.into(),
             indexed: index.into(),
             hue: color.into(),
-            address: addr.to_string(),
+            user: user.into(),
             created_at: created_at.into(),
         }
     }
@@ -50,6 +50,6 @@ pub struct CreateRingDto {
     pub latitude: f64,
     pub indexed: i32,
     pub hue: i32,
-    pub address: String,
+    pub user: Uuid,
     pub created_at: OffsetDateTime,
 }

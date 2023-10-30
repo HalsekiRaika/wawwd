@@ -11,11 +11,12 @@ use kernel::{
         geology::Position,
         instance::{FinishedAt, Instance, InstanceId, RingSet, StartedAt},
         location::LocationId,
-        ring::{CreatedAt, HueColor, Index, Ring, RingId, UserIp},
+        ring::{CreatedAt, HueColor, Index, Ring, RingId, UserId},
     },
     repository::{DependOnInstanceRepository, DependOnLocationRepository, InstanceRepository},
 };
 use orbital::export_service;
+
 
 #[async_trait]
 #[export_service]
@@ -35,7 +36,7 @@ pub trait CreateRingService:
             latitude,
             indexed,
             hue,
-            address,
+            user,
             created_at,
         } = create;
 
@@ -61,7 +62,7 @@ pub trait CreateRingService:
         let pos = Position::new(longitude, latitude)?;
         let index = Index::new(indexed)?;
         let hue = HueColor::new(hue);
-        let address = UserIp::new(address)?;
+        let address = UserId::new(user);
         let created_at = CreatedAt::new(created_at);
 
         let ring = Ring::new(id, pos, address, index, hue, created_at);
