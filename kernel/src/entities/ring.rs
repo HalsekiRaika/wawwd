@@ -3,8 +3,9 @@ mod hue;
 mod index;
 mod ring_id;
 mod user_addr;
+mod user_id;
 
-pub use self::{created_at::*, hue::*, index::*, ring_id::*, user_addr::*};
+pub use self::{created_at::*, hue::*, index::*, ring_id::*, user_addr::*, user_id::*};
 
 use crate::entities::geology::Position;
 use destructure::Destructure;
@@ -16,6 +17,7 @@ pub struct Ring {
     id: RingId,
     pos_in: Position,
     addr: UserIp,
+    user: UserId,
     index: Index,
     color: HueColor,
     created_at: CreatedAt,
@@ -26,6 +28,7 @@ impl Ring {
         id: RingId,
         pos_in: Position,
         addr: UserIp,
+        user: UserId,
         index: Index,
         color: HueColor,
         created_at: CreatedAt,
@@ -34,6 +37,7 @@ impl Ring {
             id,
             pos_in,
             addr,
+            user,
             index,
             color,
             created_at,
@@ -52,6 +56,10 @@ impl Ring {
 
     pub fn addr(&self) -> &UserIp {
         &self.addr
+    }
+
+    pub fn user(&self) -> &UserId {
+        &self.user
     }
 
     pub fn index(&self) -> &Index {
@@ -84,6 +92,12 @@ impl PartialEq<Index> for Ring {
 impl PartialEq<CreatedAt> for Ring {
     fn eq(&self, other: &CreatedAt) -> bool {
         self.created_at.eq(other)
+    }
+}
+
+impl PartialEq<UserId> for Ring {
+    fn eq(&self, other: &UserId) -> bool {
+        self.user.eq(other)
     }
 }
 
