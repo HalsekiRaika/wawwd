@@ -3,5 +3,5 @@ use kernel::external::uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct RequireQuery {
-    pub instance: Uuid
+    pub location: Uuid,
 }

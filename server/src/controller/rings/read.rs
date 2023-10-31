@@ -6,6 +6,7 @@ use kernel::external::uuid::Uuid;
 use serde::Serialize;
 use std::cmp::Ordering;
 use std::collections::BTreeSet;
+use kernel::entities::location::LocationId;
 
 pub struct SelectionIdToInstanceId;
 
@@ -13,6 +14,15 @@ impl Intake<Uuid> for SelectionIdToInstanceId {
     type To = InstanceId;
     fn emit(&self, input: Uuid) -> Self::To {
         InstanceId::new(input)
+    }
+}
+
+pub struct SelectionIdToLocationId;
+
+impl Intake<Uuid> for SelectionIdToLocationId {
+    type To = LocationId;
+    fn emit(&self, input: Uuid) -> Self::To {
+        LocationId::new(input)
     }
 }
 

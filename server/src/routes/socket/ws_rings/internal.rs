@@ -10,23 +10,23 @@ use application::services::{CreateRingService, DependOnCreateRingService};
 use kernel::external::uuid::Uuid;
 use kernel::repository::{DependOnInstanceRepository, InstanceRepository};
 use crate::AppHandler;
-use crate::controller::{Controller, CreateRingRequest, InstanceToDetailResponse, RequestToCreateRingDto, RingDtoToResponseJson, SelectionIdToInstanceId};
+use crate::controller::{Controller, CreateRingRequest, InstanceToDetailResponse, RequestToCreateRingDto, RingDtoToResponseJson, SelectionIdToLocationId};
 
 static BROADCAST: Lazy<Sender<String>> = Lazy::new(|| broadcast::channel(10).0);
 
 #[allow(unused_mut)]
-pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler, instance: Uuid) {
+pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler, location: Uuid) {
     let (mut sen, mut rec) = socket.split();
     let arc_sen = Arc::new(Mutex::new(sen));
 
     let handler_once = handler.clone();
-    let Ok(Some(instance)) = Controller::new(SelectionIdToInstanceId, InstanceToDetailResponse)
-        .intake(instance)
-        .handle(|input| async move { handler_once.as_ref().instance_repository().find_by_id(&input).await })
+    let Ok(Some(instance)) = Controller::new(SelectionIdToLocationId, InstanceToDetailResponse)
+        .intake(location)
+        .handle(|input| async move { handler_once.as_ref().instance_repository().find_unfinished(&input).await })
         .await
     else {
-        tracing::error!("`{who}` request invalid instance id: {:?}", instance);
-        arc_sen.lock().await.send(Message::Text("Invalid instance id".to_string())).await.unwrap();
+        tracing::error!("`{who}` request invalid location id: {:?}", location);
+        arc_sen.lock().await.send(Message::Text(format!("Invalid location id. `{location}`"))).await.unwrap();
         return;
     };
 

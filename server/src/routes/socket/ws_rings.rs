@@ -26,6 +26,6 @@ pub async fn ws_handler(
     ws.on_failed_upgrade(|e| {
         tracing::error!("Failed to upgrade websocket: {}", e);
     }).on_upgrade(move |socket| async move {
-        internal::handle(socket, info, handler, query.instance).await;
+        internal::handle(socket, info, handler, query.location).await;
     })
 }
