@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use crate::error::ServerError;
 use application::services::{
     DependOnCreateInstanceService, DependOnCreateLocationService, DependOnCreateRingService,
@@ -14,7 +15,6 @@ use kernel::repository::{
 };
 use kernel::security::DependOnAuthorizeAdminPolicy;
 use kernel::service::DependOnImageExportExternalStorageService;
-use std::ops::Deref;
 use std::sync::Arc;
 
 pub struct AppHandler {
@@ -37,13 +37,18 @@ impl Clone for AppHandler {
     }
 }
 
-impl Deref for AppHandler {
-    type Target = Handler;
-    fn deref(&self) -> &Self::Target {
-        self.inner.as_ref()
+impl AsRef<Handler> for AppHandler {
+    fn as_ref(&self) -> &Handler {
+        &self.inner
     }
 }
 
+impl Deref for AppHandler {
+    type Target = Handler;
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
 pub struct Handler {
     loc: LocationDataBase,
     ins: InstanceDataBase,
