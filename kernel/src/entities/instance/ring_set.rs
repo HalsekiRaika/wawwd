@@ -25,7 +25,7 @@ impl RingSet {
                 msg: "`RingSet` length should be less than 71.",
             });
         }
-        if self.0.iter().any(|item| item.index() == ring.index()) {
+        if self.0.iter().any(|item| item.indexed() == ring.indexed()) {
             return Err(KernelError::Conflict {
                 entity: "RingSet",
                 msg: "`Index` should be Unique within a defined value.",

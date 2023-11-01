@@ -25,8 +25,8 @@ impl From<(Instance, Ring)> for RingDto {
             id,
             pos_in,
             user,
-            index,
-            color,
+            indexed,
+            hue,
             created_at,
         } = ring.into_destruct();
         let DestructPosition { x, y } = pos_in.into_destruct();
@@ -36,8 +36,8 @@ impl From<(Instance, Ring)> for RingDto {
             location: location.into(),
             longitude: x.into(),
             latitude: y.into(),
-            indexed: index.into(),
-            hue: color.into(),
+            indexed: indexed.into(),
+            hue: hue.into(),
             user: user.into(),
             created_at: created_at.into(),
         }

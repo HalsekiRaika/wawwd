@@ -16,8 +16,8 @@ pub struct Ring {
     id: RingId,
     pos_in: Position,
     user: UserId,
-    index: Index,
-    color: HueColor,
+    indexed: Index,
+    hue: HueColor,
     created_at: CreatedAt,
 }
 
@@ -26,16 +26,16 @@ impl Ring {
         id: RingId,
         pos_in: Position,
         user: UserId,
-        index: Index,
-        color: HueColor,
+        indexed: Index,
+        hue: HueColor,
         created_at: CreatedAt,
     ) -> Ring {
         Self {
             id,
             pos_in,
             user,
-            index,
-            color,
+            indexed,
+            hue,
             created_at,
         }
     }
@@ -54,12 +54,12 @@ impl Ring {
         &self.user
     }
 
-    pub fn index(&self) -> &Index {
-        &self.index
+    pub fn indexed(&self) -> &Index {
+        &self.indexed
     }
 
-    pub fn color(&self) -> &HueColor {
-        &self.color
+    pub fn hue(&self) -> &HueColor {
+        &self.hue
     }
 
     pub fn created_at(&self) -> &CreatedAt {
@@ -77,7 +77,7 @@ impl PartialEq<Self> for Ring {
 
 impl PartialEq<Index> for Ring {
     fn eq(&self, other: &Index) -> bool {
-        self.index.eq(other)
+        self.indexed.eq(other)
     }
 }
 

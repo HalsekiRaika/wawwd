@@ -166,9 +166,9 @@ impl InternalInstanceDataBase {
                 .push_bind_unseparated(ring.pos_in().x().as_ref())
                 .push_bind(ring.pos_in().y().as_ref())
                 .push_unseparated(r#"), 4326)"#)
-                .push_bind(ring.color().as_ref())
+                .push_bind(ring.hue().as_ref())
                 .push_bind(ring.user().as_ref())
-                .push_bind(ring.index().as_ref())
+                .push_bind(ring.indexed().as_ref())
                 .push_bind(ring.created_at().as_ref());
         });
 
