@@ -16,6 +16,15 @@ services:
       options:
         max-size: "5m"
         max-file: "3"
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
   wawwd:
     build: .
     ports:
