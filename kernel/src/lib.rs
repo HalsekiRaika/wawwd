@@ -4,6 +4,8 @@ pub mod finder;
 pub mod repository;
 pub mod security;
 pub mod service;
+pub mod volatiles;
+
 
 #[cfg(feature = "time")]
 #[cfg(feature = "uuid")]
