@@ -10,7 +10,7 @@ use application::services::{CreateRingService, DependOnCreateRingService};
 use kernel::external::uuid::Uuid;
 use kernel::repository::{DependOnInstanceRepository, InstanceRepository};
 use crate::AppHandler;
-use crate::controller::{Controller, CreateRingRequest, InstanceToDetailResponse, RequestToCreateRingDto, RingDtoToResponseJson, SelectionIdToLocationId};
+use crate::controller::{Controller, CreateRingRequest, InstanceToDetailResponse, RequestToCreateRingDto, RingDtoToDetailResponseJson, SelectionIdToLocationId};
 
 static BROADCAST: Lazy<Sender<String>> = Lazy::new(|| broadcast::channel(10).0);
 
@@ -53,7 +53,7 @@ pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler,
                 continue;
             };
 
-            let res = match Controller::new(RequestToCreateRingDto, RingDtoToResponseJson)
+            let res = match Controller::new(RequestToCreateRingDto, RingDtoToDetailResponseJson)
                 .intake(deserialized)
                 .handle(|input| async { handler_recv.as_ref().create_ring_service().create(input).await })
                 .await

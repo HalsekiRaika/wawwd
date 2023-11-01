@@ -34,6 +34,22 @@ impl Exhaust<RingDto> for RingDtoToResponseJson {
     }
 }
 
+pub struct RingDtoToDetailResponseJson;
+
+impl Exhaust<RingDto> for RingDtoToDetailResponseJson {
+    type To = RingDetailResponse;
+    fn emit(&self, input: RingDto) -> Self::To {
+        RingDetailResponse {
+            id: input.id,
+            instance: input.instance,
+            indexed: input.indexed,
+            hue: input.hue,
+            user: input.user,
+            created_at: input.created_at,
+        }
+    }
+}
+
 #[derive(Deserialize)]
 pub struct CreateRingRequest {
     pub location: Uuid,
@@ -51,4 +67,15 @@ pub struct RingResponse {
     id: Uuid,
     instance: Uuid,
     location: Uuid,
+}
+
+#[derive(Serialize)]
+pub struct RingDetailResponse {
+    id: Uuid,
+    instance: Uuid,
+    indexed: i32,
+    hue: i32,
+    user: Uuid,
+    #[serde(with = "kernel::external::time::serde::iso8601")]
+    created_at: OffsetDateTime,
 }
