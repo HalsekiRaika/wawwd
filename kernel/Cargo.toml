@@ -19,6 +19,7 @@ geo-types = "0.7"
 orbital = "0.1"
 rand = "0.8.5"
 base64 = "0.21"
+sha2 = "0.10"
 
 thiserror = { workspace = true }
 anyhow =  { workspace = true }
