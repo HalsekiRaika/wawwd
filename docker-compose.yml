@@ -18,6 +18,8 @@ services:
         max-file: "3"
   redis:
     image: redis:latest
+    volumes:
+      - cache-data:/data
     ports:
       - "6379:6379"
     logging:
@@ -36,3 +38,4 @@ services:
 
 volumes:
   db-data:
+  cache-data:
