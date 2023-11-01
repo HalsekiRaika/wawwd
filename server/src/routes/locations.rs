@@ -14,12 +14,14 @@ use application::transfer::{CreateLocationDto, DeleteLocationDto, UpdateLocation
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum::Json;
+use axum::{Json, TypedHeader};
+use axum::headers::IfNoneMatch;
 use geojson::{Feature, FeatureCollection};
 use kernel::repository::{DependOnLocationRepository, LocationRepository};
 
 pub async fn locations(
     State(handler): State<AppHandler>,
+    _header: Option<TypedHeader<IfNoneMatch>> // Todo: implement etag
 ) -> Result<impl IntoResponse, ServerError> {
     let all = handler
         .location_repository()
