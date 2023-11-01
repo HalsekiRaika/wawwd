@@ -26,9 +26,19 @@ impl Intake<Uuid> for SelectionIdToLocationId {
     }
 }
 
+
 pub struct InstanceToDetailResponse;
 
-impl Exhaust<Option<Instance>> for InstanceToDetailResponse {
+impl Exhaust<Instance> for InstanceToDetailResponse {
+    type To = RingInstanceWithDetail;
+    fn emit(&self, input: Instance) -> Self::To {
+        input.into()
+    }
+}
+
+pub struct MaybeInstanceToDetailResponse;
+
+impl Exhaust<Option<Instance>> for MaybeInstanceToDetailResponse {
     type To = Option<RingInstanceWithDetail>;
     fn emit(&self, input: Option<Instance>) -> Self::To {
         input.map(|ins| ins.into())

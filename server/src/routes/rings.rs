@@ -2,7 +2,7 @@ mod query;
 
 use self::query::SelectionQuery;
 use crate::controller::{
-    Controller, CreateRingRequest, InstanceToDetailResponse, InstancesToJsonBTreeSet,
+    Controller, CreateRingRequest, MaybeInstanceToDetailResponse, InstancesToJsonBTreeSet,
     RequestToCreateRingDto, RingDtoToResponseJson, RingInstance, RingInstanceWithDetail,
     SelectionIdToInstanceId,
 };
@@ -29,7 +29,7 @@ pub async fn rings(
     }
 
     let res = if let Some(id) = query.id {
-        let res = Controller::new(SelectionIdToInstanceId, InstanceToDetailResponse)
+        let res = Controller::new(SelectionIdToInstanceId, MaybeInstanceToDetailResponse)
             .intake(id)
             .handle(|input| async move { handler.instance_repository().find_by_id(&input).await })
             .await?;

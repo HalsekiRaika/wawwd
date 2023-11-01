@@ -10,7 +10,7 @@ use super::location::LocationId;
 use destructure::Destructure;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Deserialize, Serialize, Destructure)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize, Destructure)]
 pub struct Instance {
     id: InstanceId,
     location: LocationId,
@@ -34,6 +34,12 @@ impl Instance {
             started_at,
             finished_at,
         }
+    }
+    
+    pub fn gen_from_location_id(
+        location: LocationId,
+    ) -> Instance {
+        Self { location, ..Default::default() }
     }
 }
 

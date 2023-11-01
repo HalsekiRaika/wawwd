@@ -4,7 +4,7 @@ use crate::error::KernelError;
 use destructure::Destructure;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Deserialize, Serialize, Destructure)]
+#[derive(Debug, Clone, Hash, Deserialize, Serialize, Destructure)]
 pub struct Localize {
     country_code: LocalizeId,
     localize: LocalizeName,

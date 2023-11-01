@@ -1,10 +1,6 @@
 use std::ops::Deref;
 use crate::error::ServerError;
-use application::services::{
-    DependOnCreateInstanceService, DependOnCreateLocationService, DependOnCreateRingService,
-    DependOnDeleteLocationService, DependOnExportImageService, DependOnUpdateInstanceService,
-    DependOnUpdateLocationService,
-};
+use application::services::{DependOnCreateEmptyInstanceService, DependOnCreateInstanceService, DependOnCreateLocationService, DependOnCreateRingService, DependOnDeleteLocationService, DependOnExportImageService, DependOnUpdateInstanceService, DependOnUpdateLocationService};
 use driver::database::{ImageDataBase, InstanceDataBase, LocationDataBase, RingDataBase};
 use driver::security::AuthorizeInMemoryInstance;
 use driver::service::S3ImageStorageService;
@@ -175,6 +171,13 @@ impl DependOnCreateInstanceService for Handler {
 impl DependOnUpdateInstanceService for Handler {
     type UpdateInstanceService = Self;
     fn update_instance_service(&self) -> &Self::UpdateInstanceService {
+        self
+    }
+}
+
+impl DependOnCreateEmptyInstanceService for Handler {
+    type CreateEmptyInstanceService = Self;
+    fn create_empty_instance_service(&self) -> &Self::CreateEmptyInstanceService {
         self
     }
 }

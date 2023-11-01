@@ -6,11 +6,11 @@ use once_cell::sync::Lazy;
 use tokio::sync::broadcast::{self, Sender};
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
-use application::services::{CreateRingService, DependOnCreateRingService};
+use application::services::{DependOnCreateEmptyInstanceService, DependOnCreateRingService};
 use kernel::external::uuid::Uuid;
 use kernel::repository::{DependOnInstanceRepository, InstanceRepository};
 use crate::AppHandler;
-use crate::controller::{Controller, CreateRingRequest, InstanceToDetailResponse, RequestToCreateRingDto, RingDtoToDetailResponseJson, SelectionIdToLocationId};
+use crate::controller::{Controller, CreateRingRequest, InstanceToDetailResponse, MaybeInstanceToDetailResponse, RequestToCreateRingDto, RingDtoToDetailResponseJson, SelectionIdToLocationId};
 
 static BROADCAST: Lazy<Sender<String>> = Lazy::new(|| broadcast::channel(10).0);
 
@@ -20,14 +20,28 @@ pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler,
     let arc_sen = Arc::new(Mutex::new(sen));
 
     let handler_once = handler.clone();
-    let Ok(Some(instance)) = Controller::new(SelectionIdToLocationId, InstanceToDetailResponse)
+    let instance = match Controller::new(SelectionIdToLocationId, MaybeInstanceToDetailResponse)
         .intake(location)
         .handle(|input| async move { handler_once.as_ref().instance_repository().find_unfinished(&input).await })
         .await
-    else {
-        tracing::error!("`{who}` request invalid location id: {:?}", location);
-        arc_sen.lock().await.send(Message::Text(format!("Invalid location id. `{location}`"))).await.unwrap();
-        return;
+    {
+        Ok(Some(res)) => res,
+        _ => {
+            let handler_once = handler.clone();
+            tracing::info!("`{who}` request location_id: {:?} but there were no valid instances.", location);
+            let Ok(instance) = Controller::new(SelectionIdToLocationId, InstanceToDetailResponse)
+                .intake(location)
+                .handle(|input| async move {
+                    use application::services::CreateEmptyInstanceService;
+                    handler_once.as_ref().create_empty_instance_service().create(input).await
+                })
+                .await
+            else {
+                arc_sen.lock().await.send(Message::Text(format!("Failed generate instance in `{location}`."))).await.unwrap();
+                return;
+            };
+            instance
+        }
     };
 
     let Ok(serialized) = serde_json::to_string(&instance) else {
@@ -55,7 +69,10 @@ pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler,
 
             let res = match Controller::new(RequestToCreateRingDto, RingDtoToDetailResponseJson)
                 .intake(deserialized)
-                .handle(|input| async { handler_recv.as_ref().create_ring_service().create(input).await })
+                .handle(|input| async {
+                    use application::services::CreateRingService;
+                    handler_recv.as_ref().create_ring_service().create(input).await
+                })
                 .await
             {
                 Ok(res) => res,
