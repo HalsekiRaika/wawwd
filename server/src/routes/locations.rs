@@ -13,10 +13,10 @@ use application::services::{
 };
 use application::transfer::{CreateLocationDto, DeleteLocationDto, UpdateLocationDto};
 use axum::extract::State;
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
-use axum::{headers, Json, TypedHeader};
-use axum::headers::ETag;
+use axum::Json;
+use axum::headers::{ETag, HeaderMapExt, IfNoneMatch};
 use geojson::{Feature, FeatureCollection};
 use kernel::repository::{DependOnLocationRepository, LocationRepository};
 use kernel::volatiles::{DependOnLocationETagCache, LocationETagCache};
@@ -25,20 +25,18 @@ use inner::ResType;
 
 pub async fn locations(
     State(handler): State<AppHandler>,
-    _header: Option<TypedHeader<headers::IfNoneMatch>>,
+    header: HeaderMap,
 ) -> Result<impl IntoResponse, ServerError> {
-
-    println!("{:?}", _header);
-
-    if let Some(TypedHeader(etag)) = _header {
+    if let Some(etag) = header.typed_try_get::<IfNoneMatch>()? {
         if let Some(cache) = handler.location_e_tag_cache().find().await? {
-            println!("{:?}", cache.as_ref());
+            println!("{:?}", etag);
             let cached = &ETag::from_str(cache.as_ref())
                 .map_err(|e| {
                     tracing::error!("ETag parse error: {:?}", e.to_string());
                     ServerError::IO(anyhow::Error::new(e))
                 })?;
-            if etag.precondition_passes(cached) {
+            println!("{:?}", cached);
+            if !etag.precondition_passes(cached) {
                 return Ok(ResType::NotModified(StatusCode::NOT_MODIFIED));
             }
         }
@@ -51,11 +49,14 @@ pub async fn locations(
         .into_iter()
         .map(Feature::try_from)
         .collect::<Result<Vec<Feature>, _>>()?;
-    let find = handler.location_e_tag_cache().find().await?;
-    let find: Option<String> = find.map(Into::into);
+    let find: Option<String> = handler.location_e_tag_cache()
+        .find()
+        .await?
+        .map(Into::into);
+
     Ok(ResType::Ok(
         StatusCode::OK,
-            find.unwrap(),
+        find,
         GeoJson(geojson::GeoJson::FeatureCollection(FeatureCollection::from_iter(all)))
     ))
 }
@@ -109,7 +110,7 @@ mod inner {
 
     pub(super) enum ResType {
         NotModified(StatusCode),
-        Ok(StatusCode, String, GeoJson),
+        Ok(StatusCode, Option<String>, GeoJson),
     }
 
     impl IntoResponse for ResType {
@@ -118,7 +119,9 @@ mod inner {
                 ResType::NotModified(status) => status.into_response(),
                 ResType::Ok(status, etag, geojson) => {
                     let mut headers = HeaderMap::new();
-                    headers.insert("ETag", HeaderValue::from_str(&etag).unwrap());
+                    if let Some(etag) = etag {
+                        headers.insert("ETag", HeaderValue::from_str(&etag).unwrap());
+                    }
                     (status, headers, geojson).into_response()
                 },
             }

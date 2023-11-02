@@ -80,3 +80,9 @@ impl From<KernelError> for ServerError {
         Self::Kernel(anyhow::Error::new(value))
     }
 }
+
+impl From<axum::headers::Error> for ServerError {
+    fn from(value: axum::headers::Error) -> Self {
+        Self::IO(anyhow::Error::new(value))
+    }
+}

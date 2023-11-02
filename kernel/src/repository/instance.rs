@@ -8,6 +8,7 @@ use std::collections::BTreeSet;
 #[rustfmt::skip]
 #[async_trait]
 #[export_service]
+#[cfg_attr(feature = "mock", mockall::automock)]
 pub trait InstanceRepository: 'static + Sync + Send {
     async fn create(&self, create: &Instance) -> Result<(), KernelError>;
     async fn update(&self, update: &Instance) -> Result<(), KernelError>;

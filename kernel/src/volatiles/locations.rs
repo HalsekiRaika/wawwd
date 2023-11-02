@@ -5,6 +5,7 @@ use crate::error::KernelError;
 
 #[async_trait]
 #[export_service]
+#[cfg_attr(feature = "mock", mockall::automock)]
 pub trait LocationETagCache: 'static + Sync + Send {
     const NAMESPACE: &'static str = "location_etag_cache";
     async fn save(&self, tag: Etag) -> Result<(), KernelError>;
