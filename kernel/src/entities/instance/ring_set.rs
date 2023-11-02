@@ -10,7 +10,7 @@ pub struct RingSet(BTreeSet<Ring>);
 impl RingSet {
     pub fn new(vec: impl Into<Vec<Ring>>) -> Result<RingSet, KernelError> {
         let rings = vec.into();
-        if (rings.len() + 1) >= 71 {
+        if (rings.len() + 1) > 71 {
             return Err(KernelError::Validation {
                 msg: "`RingSet` length should be less than 71.",
             });
