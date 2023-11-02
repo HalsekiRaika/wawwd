@@ -12,6 +12,8 @@ use kernel::repository::{
 use kernel::security::DependOnAuthorizeAdminPolicy;
 use kernel::service::DependOnImageExportExternalStorageService;
 use std::sync::Arc;
+use driver::volatile::LocationEtagVolatileDataBase;
+use kernel::volatiles::DependOnLocationETagCache;
 
 pub struct AppHandler {
     inner: Arc<Handler>,
@@ -52,6 +54,8 @@ pub struct Handler {
     ring: RingDataBase,
     auth: AuthorizeInMemoryInstance,
 
+    cache_loc: LocationEtagVolatileDataBase,
+
     s3_images: S3ImageStorageService,
 }
 
@@ -60,6 +64,9 @@ impl Handler {
     async fn init() -> Result<Self, ServerError> {
         let pg_url = dotenvy::var("PG_DATABASE_URL")
             .map_err(|_| ServerError::EnvError(r#"PG_DATABASE_URL"#))?;
+
+        let redis_url = dotenvy::var("REDIS_URL")
+            .map_err(|_| ServerError::EnvError(r#"REDIS_URL"#))?;
 
         let anonymous = dotenvy::var("S3_ANONYMOUS")
             .map(|v| v.parse::<bool>().unwrap_or(false))
@@ -88,6 +95,7 @@ impl Handler {
         );
 
         let pg_pool = DataBaseInitializer::setup_postgres(pg_url).await?;
+        let redis_pool = DataBaseInitializer::setup_redis(redis_url).await?;
 
         let use_localstack = dotenvy::var("S3_USE_LOCALSTACK")
             .map(|v| v.parse::<bool>().unwrap_or(false))
@@ -107,6 +115,8 @@ impl Handler {
 
         let s3_images = S3ImageStorageService::new(s3_bucket);
 
+        let cache_loc = LocationEtagVolatileDataBase::new(redis_pool);
+
         Ok(Self {
             loc,
             ins,
@@ -114,6 +124,7 @@ impl Handler {
             ring,
             auth,
             s3_images,
+            cache_loc
         })
     }
 }
@@ -122,6 +133,13 @@ impl DependOnLocationRepository for Handler {
     type LocationRepository = LocationDataBase;
     fn location_repository(&self) -> &Self::LocationRepository {
         &self.loc
+    }
+}
+
+impl DependOnLocationETagCache for Handler {
+    type LocationETagCache = LocationEtagVolatileDataBase;
+    fn location_e_tag_cache(&self) -> &Self::LocationETagCache {
+        &self.cache_loc
     }
 }
 

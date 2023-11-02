@@ -8,4 +8,6 @@ use crate::error::KernelError;
 pub trait LocationETagCache: 'static + Sync + Send {
     const NAMESPACE: &'static str = "location_etag_cache";
     async fn save(&self, tag: Etag) -> Result<(), KernelError>;
+    async fn dele(&self) -> Result<(), KernelError>;
+    async fn find(&self) -> Result<Option<Etag>, KernelError>;
 }

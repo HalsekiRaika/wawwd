@@ -71,7 +71,7 @@ pub trait CreateRingService:
 
         instance.rings.add(ring.clone())?;
 
-        if instance.rings.len() > 70 {
+        if instance.rings.len() >= 70 {
             instance.finished_at = FinishedAt::new(OffsetDateTime::now_utc());
         }
 
@@ -81,3 +81,4 @@ pub trait CreateRingService:
         Ok((instance, ring).into())
     }
 }
+

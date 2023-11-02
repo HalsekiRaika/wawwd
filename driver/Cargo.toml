@@ -20,6 +20,7 @@ geo-types = "0.7"
 rust-s3 = { version = "0.33", features = ["tokio", "tokio-native-tls"] }
 thiserror = { workspace = true }
 anyhow =  { workspace = true }
+deadpool-redis = "0.13"
 
 tracing = "0.1"
 

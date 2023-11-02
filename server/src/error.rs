@@ -70,6 +70,7 @@ impl From<DriverError> for ServerError {
             DriverError::Kernel(e) => ServerError::Kernel(e),
             DriverError::Decoding { .. } => ServerError::Driver(anyhow::Error::new(value)),
             DriverError::S3(e) => ServerError::Driver(e),
+            DriverError::Redis(e) => ServerError::Driver(e),
         }
     }
 }

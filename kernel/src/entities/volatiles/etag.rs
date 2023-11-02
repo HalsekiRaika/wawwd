@@ -1,13 +1,17 @@
 use std::hash::Hash;
+use sha2::{Sha256, Digest};
 use time::OffsetDateTime;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Etag(Vec<u8>);
+pub struct Etag(String);
 
 impl Etag {
     pub fn new(rev: OffsetDateTime) -> Self {
         let d = Self::digit(rev);
-        Self(d)
+        let mut hasher = Sha256::new();
+        hasher.update(d);
+        let res = hasher.finalize();
+        Self(format!("\"{res:x}\""))
     }
 
     fn digit(time: OffsetDateTime) -> Vec<u8> {
@@ -25,14 +29,29 @@ impl Etag {
             vec![0]
         }
     }
-}
 
-impl AsRef<[u8]> for Etag {
-    fn as_ref(&self) -> &[u8] {
-        self.0.as_slice()
+    pub fn unchecked_new(exact: impl Into<String>) -> Self {
+        Self(exact.into())
     }
 }
 
+impl AsRef<str> for Etag {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl From<Etag> for String {
+    fn from(etag: Etag) -> Self {
+        etag.0
+    }
+}
+
+impl Default for Etag {
+    fn default() -> Self {
+        Self::new(OffsetDateTime::now_utc())
+    }
+}
 
 #[cfg(test)]
 mod test {

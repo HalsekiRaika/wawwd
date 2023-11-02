@@ -3,6 +3,7 @@ use s3::{Bucket, Region};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::time::Duration;
+use deadpool_redis::{Config, Pool as RedisPool, Runtime};
 
 pub use s3::creds::Credentials as S3Credentials;
 
@@ -23,6 +24,14 @@ impl DataBaseInitializer {
             .map_err(|e| DriverError::DataBaseInitialization(anyhow::Error::new(e)))?;
 
         Ok(pg_pool)
+    }
+
+    pub async fn setup_redis(url: impl AsRef<str>) -> Result<RedisPool, DriverError> {
+        let redis_pool = Config::from_url(url.as_ref())
+            .create_pool(Some(Runtime::Tokio1))
+            .map_err(|e| DriverError::DataBaseInitialization(anyhow::Error::new(e)))?;
+
+        Ok(redis_pool)
     }
 
     pub async fn setup_s3(

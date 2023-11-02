@@ -8,6 +8,8 @@ pub enum DriverError {
     Sqlx(anyhow::Error),
     #[error(transparent)]
     S3(anyhow::Error),
+    #[error(transparent)]
+    Redis(anyhow::Error),
     #[error("Failed database initialization. {0}")]
     DataBaseInitialization(anyhow::Error),
     #[error(transparent)]
@@ -32,11 +34,24 @@ impl From<sqlx::Error> for DriverError {
     }
 }
 
+impl From<deadpool_redis::PoolError> for DriverError {
+    fn from(value: deadpool_redis::PoolError) -> Self {
+        Self::Redis(anyhow::Error::new(value))
+    }
+}
+
+impl From<deadpool_redis::redis::RedisError> for DriverError {
+    fn from(value: deadpool_redis::redis::RedisError) -> Self {
+        Self::Redis(anyhow::Error::new(value))
+    }
+}
+
 impl From<DriverError> for KernelError {
     fn from(value: DriverError) -> Self {
         match value {
             DriverError::S3(e) => Self::Driver(e),
             DriverError::Sqlx(e) => Self::Driver(e),
+            DriverError::Redis(e) => Self::Driver(e),
             DriverError::Kernel(e) => Self::Internal(e),
             DriverError::DataBaseInitialization(e) => Self::Internal(e),
             DriverError::Decoding { .. } => Self::Driver(anyhow::Error::new(value)),

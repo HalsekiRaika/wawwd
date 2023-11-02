@@ -17,7 +17,7 @@ services:
         max-size: "5m"
         max-file: "3"
   redis:
-    image: redis:latest
+    image: redis:7.2.2-alpine
     volumes:
       - cache-data:/data
     ports:
@@ -33,6 +33,7 @@ services:
       - "3854:3854"
     depends_on:
       - postgres_db
+      - redis
     env_file:
       - .env.docker
 

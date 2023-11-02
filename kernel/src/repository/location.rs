@@ -6,6 +6,7 @@ use orbital::export_service;
 #[rustfmt::skip]
 #[async_trait]
 #[export_service]
+#[cfg_attr(feature = "mock", mockall::automock)]
 pub trait LocationRepository: 'static + Send + Sync {
     async fn create(&self, create: &Location) -> Result<(), KernelError>;
     async fn update(&self, update: &Location) -> Result<(), KernelError>;

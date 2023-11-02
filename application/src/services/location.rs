@@ -5,10 +5,18 @@ use kernel::entities::geology::{Position, Radius};
 use kernel::entities::location::{Localize, LocalizeId, Location, LocationId};
 use kernel::repository::{DependOnLocationRepository, LocationRepository};
 use orbital::export_service;
+use kernel::entities::volatiles::Etag;
+use kernel::volatiles::{DependOnLocationETagCache, LocationETagCache};
 
 #[async_trait]
 #[export_service]
-pub trait CreateLocationService: 'static + Send + Sync + DependOnLocationRepository {
+pub trait CreateLocationService:
+    'static
+    + Send
+    + Sync
+    + DependOnLocationRepository
+    + DependOnLocationETagCache
+{
     async fn create(&self, create: CreateLocationDto) -> Result<LocationDto, ApplicationError> {
         let CreateLocationDto {
             latitude,
@@ -28,6 +36,7 @@ pub trait CreateLocationService: 'static + Send + Sync + DependOnLocationReposit
         let mark = Location::new(lid, pos, rad, loc);
 
         self.location_repository().create(&mark).await?;
+        self.location_e_tag_cache().save(Etag::default()).await?;
 
         Ok(mark.into())
     }
@@ -35,7 +44,13 @@ pub trait CreateLocationService: 'static + Send + Sync + DependOnLocationReposit
 
 #[async_trait]
 #[export_service]
-pub trait UpdateLocationService: 'static + Send + Sync + DependOnLocationRepository {
+pub trait UpdateLocationService:
+    'static
+    + Send
+    + Sync
+    + DependOnLocationRepository
+    + DependOnLocationETagCache
+{
     //noinspection DuplicatedCode
     async fn update(&self, update: UpdateLocationDto) -> Result<LocationDto, ApplicationError> {
         let UpdateLocationDto {
@@ -67,6 +82,7 @@ pub trait UpdateLocationService: 'static + Send + Sync + DependOnLocationReposit
         let mark = mark.freeze();
 
         self.location_repository().update(&mark).await?;
+        self.location_e_tag_cache().save(Etag::default()).await?;
 
         Ok(mark.into())
     }
@@ -74,7 +90,13 @@ pub trait UpdateLocationService: 'static + Send + Sync + DependOnLocationReposit
 
 #[async_trait]
 #[export_service]
-pub trait DeleteLocationService: 'static + Send + Sync + DependOnLocationRepository {
+pub trait DeleteLocationService:
+    'static
+    + Send
+    + Sync
+    + DependOnLocationRepository
+    + DependOnLocationETagCache
+{
     //noinspection DuplicatedCode
     async fn delete(&self, delete: DeleteLocationDto) -> Result<(), ApplicationError> {
         let DeleteLocationDto { id, localize } = delete;
@@ -97,6 +119,7 @@ pub trait DeleteLocationService: 'static + Send + Sync + DependOnLocationReposit
             }
             None => self.location_repository().delete(mark.id()).await?,
         }
+        self.location_e_tag_cache().save(Etag::default()).await?;
 
         Ok(())
     }

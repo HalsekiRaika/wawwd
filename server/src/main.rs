@@ -64,8 +64,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/rings", get(routes::rings).post(routes::reg_ring))
         .nest("/ws-rings", socket)
         .nest("/images", image)
-        .layer(TraceLayer::new_for_http())
         .layer(cors)
+        .layer(TraceLayer::new_for_http())
         .with_state(handler);
 
     let bind = SocketAddr::from(([0, 0, 0, 0], 3854));
@@ -90,5 +90,20 @@ async fn exit() {
 
     tokio::select! {
         _ = user_interrupt => {}
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    use tower_http::cors::{Any, CorsLayer};
+
+    #[test]
+    fn cors() {
+        let cors = CorsLayer::new()
+            .allow_methods(Any)
+            .allow_headers(Any)
+            .allow_origin(Any);
+        println!("{:?}", cors);
     }
 }
