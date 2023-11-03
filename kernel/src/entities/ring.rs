@@ -7,6 +7,7 @@ mod user_id;
 pub use self::{created_at::*, hue::*, index::*, ring_id::*, user_id::*};
 
 use crate::entities::geology::Position;
+use crate::entities::location::LocationId;
 use destructure::Destructure;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -15,6 +16,7 @@ use std::cmp::Ordering;
 pub struct Ring {
     id: RingId,
     pos_in: Position,
+    location: LocationId,
     user: UserId,
     indexed: Index,
     hue: HueColor,
@@ -25,6 +27,7 @@ impl Ring {
     pub fn new(
         id: RingId,
         pos_in: Position,
+        location: LocationId,
         user: UserId,
         indexed: Index,
         hue: HueColor,
@@ -33,6 +36,7 @@ impl Ring {
         Self {
             id,
             pos_in,
+            location,
             user,
             indexed,
             hue,
@@ -48,6 +52,10 @@ impl Ring {
 
     pub fn pos_in(&self) -> &Position {
         &self.pos_in
+    }
+
+    pub fn location(&self) -> &LocationId {
+        &self.location
     }
 
     pub fn user(&self) -> &UserId {

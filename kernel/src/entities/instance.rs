@@ -5,15 +5,12 @@ mod started_at;
 
 pub use self::{finished_at::*, instance_id::*, ring_set::*, started_at::*};
 use std::cmp::Ordering;
-
-use super::location::LocationId;
 use destructure::Destructure;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, Destructure)]
 pub struct Instance {
     id: InstanceId,
-    location: LocationId,
     rings: RingSet,
     started_at: StartedAt,
     finished_at: FinishedAt,
@@ -22,34 +19,22 @@ pub struct Instance {
 impl Instance {
     pub fn new(
         id: InstanceId,
-        location: LocationId,
         rings: RingSet,
         started_at: StartedAt,
         finished_at: FinishedAt,
     ) -> Instance {
         Self {
             id,
-            location,
             rings,
             started_at,
             finished_at,
         }
-    }
-    
-    pub fn gen_from_location_id(
-        location: LocationId,
-    ) -> Instance {
-        Self { location, ..Default::default() }
     }
 }
 
 impl Instance {
     pub fn id(&self) -> &InstanceId {
         &self.id
-    }
-
-    pub fn location(&self) -> &LocationId {
-        &self.location
     }
 
     pub fn rings(&self) -> &RingSet {
