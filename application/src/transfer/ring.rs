@@ -19,11 +19,12 @@ pub struct RingDto {
 impl From<(Instance, Ring)> for RingDto {
     fn from(value: (Instance, Ring)) -> Self {
         let (instance, ring) = value;
-        let DestructInstance { id, location, .. } = instance.into_destruct();
+        let DestructInstance { id, .. } = instance.into_destruct();
         let instance_id = id;
         let DestructRing {
             id,
             pos_in,
+            location,
             user,
             indexed,
             hue,

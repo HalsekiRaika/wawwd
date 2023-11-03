@@ -40,11 +40,9 @@ pub trait CreateRingService:
             created_at,
         } = create;
 
-        let location = LocationId::new(location);
-
         let instance = if let Some(instance) = self
             .instance_repository()
-            .find_unfinished(&location)
+            .find_unfinished()
             .await?
         {
             instance
@@ -53,19 +51,20 @@ pub trait CreateRingService:
             let rings = RingSet::default();
             let started_at = StartedAt::default();
             let finished_at = FinishedAt::default();
-            let instance = Instance::new(id, location, rings, started_at, finished_at);
+            let instance = Instance::new(id, rings, started_at, finished_at);
 
             self.create_instance_service().create(instance).await?
         };
 
         let id = RingId::default();
         let pos = Position::new(longitude, latitude)?;
+        let location = LocationId::new(location);
         let index = Index::new(indexed)?;
         let hue = HueColor::new(hue);
         let address = UserId::new(user);
         let created_at = CreatedAt::new(created_at);
 
-        let ring = Ring::new(id, pos, address, index, hue, created_at);
+        let ring = Ring::new(id, pos, location, address, index, hue, created_at);
 
         let mut instance = instance.into_destruct();
 

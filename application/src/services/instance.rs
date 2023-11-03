@@ -1,10 +1,7 @@
 use crate::error::ApplicationError;
 use async_trait::async_trait;
 use kernel::entities::instance::Instance;
-use kernel::entities::location::LocationId;
-use kernel::repository::{
-    DependOnInstanceRepository, DependOnLocationRepository, InstanceRepository, LocationRepository,
-};
+use kernel::repository::{DependOnInstanceRepository, DependOnLocationRepository, InstanceRepository};
 use orbital::export_service;
 
 #[async_trait]
@@ -14,18 +11,6 @@ pub trait CreateInstanceService:
 {
     // noinspection DuplicatedCode
     async fn create(&self, create: Instance) -> Result<Instance, ApplicationError> {
-        let Some(_) = self
-            .location_repository()
-            .find_by_id(create.location())
-            .await?
-        else {
-            return Err(ApplicationError::NotFound {
-                entity: "location",
-                method: "find_by_id",
-                target: create.location().to_string(),
-            });
-        };
-
         self.instance_repository().create(&create).await?;
 
         Ok(create)
@@ -38,21 +23,8 @@ pub trait CreateEmptyInstanceService:
     'static + Sync + Send + DependOnLocationRepository +  DependOnInstanceRepository
 {
     // noinspection DuplicatedCode
-    async fn create(&self, location: LocationId) -> Result<Instance, ApplicationError> {
-        let instance = Instance::gen_from_location_id(location);
-
-        let Some(_) = self
-            .location_repository()
-            .find_by_id(instance.location())
-            .await?
-            else {
-                return Err(ApplicationError::NotFound {
-                    entity: "location",
-                    method: "find_by_id",
-                    target: instance.location().to_string(),
-                });
-            };
-
+    async fn create(&self) -> Result<Instance, ApplicationError> {
+        let instance = Instance::default();
         self.instance_repository().create(&instance).await?;
 
         Ok(instance)

@@ -42,6 +42,7 @@ impl Exhaust<RingDto> for RingDtoToDetailResponseJson {
         RingDetailResponse {
             id: input.id,
             instance: input.instance,
+            location: input.location,
             indexed: input.indexed,
             hue: input.hue,
             user: input.user,
@@ -73,6 +74,7 @@ pub struct RingResponse {
 pub struct RingDetailResponse {
     id: Uuid,
     instance: Uuid,
+    location: Uuid,
     indexed: i32,
     hue: i32,
     user: Uuid,

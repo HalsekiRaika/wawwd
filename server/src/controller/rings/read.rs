@@ -6,7 +6,6 @@ use kernel::external::uuid::Uuid;
 use serde::Serialize;
 use std::cmp::Ordering;
 use std::collections::BTreeSet;
-use kernel::entities::location::LocationId;
 
 pub struct SelectionIdToInstanceId;
 
@@ -16,16 +15,6 @@ impl Intake<Uuid> for SelectionIdToInstanceId {
         InstanceId::new(input)
     }
 }
-
-pub struct SelectionIdToLocationId;
-
-impl Intake<Uuid> for SelectionIdToLocationId {
-    type To = LocationId;
-    fn emit(&self, input: Uuid) -> Self::To {
-        LocationId::new(input)
-    }
-}
-
 
 pub struct InstanceToDetailResponse;
 
@@ -58,7 +47,6 @@ impl Exhaust<BTreeSet<Instance>> for InstancesToJsonBTreeSet {
 #[derive(Debug, Serialize)]
 pub struct RingInstanceWithDetail {
     id: Uuid,
-    location: Uuid,
     #[serde(with = "kernel::external::time::serde::iso8601")]
     started_at: OffsetDateTime,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -72,7 +60,6 @@ impl From<Instance> for RingInstanceWithDetail {
         let value = value.into_destruct();
         RingInstanceWithDetail {
             id: value.id.into(),
-            location: value.location.into(),
             started_at: value.started_at.into(),
             finished_at: value.finished_at.into(),
             rings: value.rings.into(),
@@ -83,7 +70,6 @@ impl From<Instance> for RingInstanceWithDetail {
 #[derive(Debug, Serialize)]
 pub struct RingInstance {
     id: Uuid,
-    location: Uuid,
     #[serde(with = "kernel::external::time::serde::iso8601")]
     started_at: OffsetDateTime,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -96,7 +82,6 @@ impl From<Instance> for RingInstance {
         let value = value.into_destruct();
         Self {
             id: value.id.into(),
-            location: value.location.into(),
             started_at: value.started_at.into(),
             finished_at: value.finished_at.into(),
         }

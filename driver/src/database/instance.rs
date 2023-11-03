@@ -55,12 +55,9 @@ impl InstanceRepository for InstanceDataBase {
         Ok(found)
     }
 
-    async fn find_unfinished(
-        &self,
-        location: &LocationId,
-    ) -> Result<Option<Instance>, KernelError> {
+    async fn find_unfinished(&self) -> Result<Option<Instance>, KernelError> {
         let mut con = self.pool.acquire().await.map_err(DriverError::from)?;
-        let found = InternalInstanceDataBase::find_unfinished(location, &mut con).await?;
+        let found = InternalInstanceDataBase::find_unfinished(&mut con).await?;
         Ok(found)
     }
 }
@@ -68,7 +65,6 @@ impl InstanceRepository for InstanceDataBase {
 #[derive(sqlx::FromRow)]
 pub(in crate::database) struct InstanceRow {
     id: Uuid,
-    location: Uuid,
     started_at: OffsetDateTime,
     finished_at: Option<OffsetDateTime>,
 }
@@ -78,7 +74,6 @@ impl TryFrom<InstanceRow> for Instance {
     fn try_from(value: InstanceRow) -> Result<Self, Self::Error> {
         Ok(Self::new(
             InstanceId::new(value.id),
-            LocationId::new(value.location),
             RingSet::default(),
             StartedAt::new(value.started_at),
             FinishedAt::new::<OffsetDateTime>(value.finished_at),
@@ -90,6 +85,7 @@ impl TryFrom<InstanceRow> for Instance {
 pub(in crate::database) struct RingRow {
     id: Uuid,
     pos_in: Decode<Geometry>,
+    location: Uuid,
     hue: i32,
     user_id: Uuid,
     index: i32,
@@ -107,6 +103,7 @@ impl TryFrom<RingRow> for Ring {
                     .geometry
                     .ok_or(DriverError::Decoding { column: "pos_in" })?,
             )?,
+            LocationId::new(value.location),
             UserId::new(value.user_id),
             Index::new(value.index)?,
             HueColor::new(value.hue),
@@ -123,13 +120,12 @@ impl InternalInstanceDataBase {
         // language=SQL
         sqlx::query(r#"
             INSERT INTO instances(
-              id, location, started_at, finished_at
+              id, started_at, finished_at
             ) VALUES (
-              $1, $2, $3, $4
+              $1, $2, $3
             )
         "#)
             .bind(create.id().as_ref())
-            .bind(create.location().as_ref())
             .bind(create.started_at().as_ref())
             .bind(create.finished_at().as_ref())
             .execute(&mut *con)
@@ -155,7 +151,7 @@ impl InternalInstanceDataBase {
 
         let mut query: QueryBuilder<Postgres> = QueryBuilder::new(r#"
             INSERT INTO rings (
-              id, instance, pos_in, hue, user_id, index, created_at
+              id, instance, pos_in, location, hue, user_id, index, created_at
             )
         "#);
 
@@ -166,6 +162,7 @@ impl InternalInstanceDataBase {
                 .push_bind_unseparated(ring.pos_in().x().as_ref())
                 .push_bind(ring.pos_in().y().as_ref())
                 .push_unseparated(r#"), 4326)"#)
+                .push_bind(ring.location().as_ref())
                 .push_bind(ring.hue().as_ref())
                 .push_bind(ring.user().as_ref())
                 .push_bind(ring.indexed().as_ref())
@@ -195,7 +192,7 @@ impl InternalInstanceDataBase {
     pub(in crate::database) async fn find_all(con: &mut PgConnection) -> Result<BTreeSet<Instance>, DriverError> {
         // language=SQL
         let all = sqlx::query_as::<_, InstanceRow>(r#"
-            SELECT id, location, started_at, finished_at FROM instances
+            SELECT id, started_at, finished_at FROM instances
         "#)
             .fetch_all(&mut *con)
             .await?
@@ -210,7 +207,7 @@ impl InternalInstanceDataBase {
     pub(in crate::database) async fn find_by_id(id: &InstanceId, con: &mut PgConnection) -> Result<Option<Instance>, DriverError> {
         // language=SQL
         let i_row = sqlx::query_as::<_, InstanceRow>(r#"
-            SELECT id, location, started_at, finished_at FROM instances WHERE id = $1
+            SELECT id, started_at, finished_at FROM instances WHERE id = $1
         "#)
             .bind(id.as_ref())
             .fetch_optional(&mut *con)
@@ -220,7 +217,7 @@ impl InternalInstanceDataBase {
 
         // language=SQL
         let r_row = sqlx::query_as::<_, RingRow>(r#"
-            SELECT id, pos_in::GEOMETRY, hue, user_id, index, created_at FROM rings WHERE instance = $1
+            SELECT id, pos_in::GEOMETRY, location, hue, user_id, index, created_at FROM rings WHERE instance = $1
         "#)
             .bind(id.as_ref())
             .fetch_all(&mut *con)
@@ -229,11 +226,12 @@ impl InternalInstanceDataBase {
             .map(|row| -> Result<Ring, KernelError> {
                 let id = RingId::new(row.id);
                 let pos_in = Position::try_from(row.pos_in.geometry.unwrap())?;
+                let location = LocationId::new(row.location);
                 let user = UserId::new(row.user_id);
                 let index = Index::new(row.index)?;
                 let color = HueColor::new(row.hue);
                 let created_at = CreatedAt::new(row.created_at);
-                Ok(Ring::new(id, pos_in, user, index, color, created_at))
+                Ok(Ring::new(id, pos_in, location, user, index, color, created_at))
             })
             .collect::<Result<Vec<_>, KernelError>>()?;
 
@@ -249,19 +247,18 @@ impl InternalInstanceDataBase {
     }
 
     #[rustfmt::skip]
-    pub(in crate::database) async fn find_unfinished(location: &LocationId, con: &mut PgConnection) -> Result<Option<Instance>, DriverError> {
+    pub(in crate::database) async fn find_unfinished(con: &mut PgConnection) -> Result<Option<Instance>, DriverError> {
         // language=SQL
         let instance = sqlx::query_as::<_, InstanceRow>(r#"
-            SELECT id, location, started_at, finished_at FROM instances WHERE instances.finished_at IS NULL AND instances.location = $1
+            SELECT id, started_at, finished_at FROM instances WHERE instances.finished_at IS NULL
         "#)
-            .bind(location.as_ref())
             .fetch_optional(&mut *con)
             .await?;
 
         let rings = if let Some(instance) = &instance {
             // language=SQL
             sqlx::query_as::<_, RingRow>(r#"
-                SELECT id, instance, pos_in::GEOMETRY, hue, user_id, index, created_at FROM rings WHERE instance = $1
+                SELECT id, instance, pos_in::GEOMETRY, location, hue, user_id, index, created_at FROM rings WHERE instance = $1
             "#)
                 .bind(instance.id)
                 .fetch_all(&mut *con)

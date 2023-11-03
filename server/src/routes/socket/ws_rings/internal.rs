@@ -7,37 +7,34 @@ use tokio::sync::broadcast::{self, Sender};
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 use application::services::{DependOnCreateEmptyInstanceService, DependOnCreateRingService};
-use kernel::external::uuid::Uuid;
 use kernel::repository::{DependOnInstanceRepository, InstanceRepository};
 use crate::AppHandler;
-use crate::controller::{Controller, CreateRingRequest, InstanceToDetailResponse, MaybeInstanceToDetailResponse, RequestToCreateRingDto, RingDtoToDetailResponseJson, SelectionIdToLocationId};
+use crate::controller::{Controller, CreateRingRequest, InstanceToDetailResponse, MaybeInstanceToDetailResponse, RequestToCreateRingDto, RingDtoToDetailResponseJson};
 
 static BROADCAST: Lazy<Sender<String>> = Lazy::new(|| broadcast::channel(10).0);
 
 #[allow(unused_mut)]
-pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler, location: Uuid) {
+pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler) {
     let (mut sen, mut rec) = socket.split();
     let arc_sen = Arc::new(Mutex::new(sen));
 
     let handler_once = handler.clone();
-    let instance = match Controller::new(SelectionIdToLocationId, MaybeInstanceToDetailResponse)
-        .intake(location)
-        .handle(|input| async move { handler_once.as_ref().instance_repository().find_unfinished(&input).await })
+    let instance = match Controller::new((), MaybeInstanceToDetailResponse)
+        .bypass(|| async move { handler_once.as_ref().instance_repository().find_unfinished().await })
         .await
     {
         Ok(Some(res)) => res,
         _ => {
             let handler_once = handler.clone();
-            tracing::info!("`{who}` request location_id: {:?} but there were no valid instances.", location);
-            let Ok(instance) = Controller::new(SelectionIdToLocationId, InstanceToDetailResponse)
-                .intake(location)
-                .handle(|input| async move {
+            tracing::info!("`{who}` request but there were no valid instances.");
+            let Ok(instance) = Controller::new((), InstanceToDetailResponse)
+                .bypass(|| async move {
                     use application::services::CreateEmptyInstanceService;
-                    handler_once.as_ref().create_empty_instance_service().create(input).await
+                    handler_once.as_ref().create_empty_instance_service().create().await
                 })
                 .await
             else {
-                arc_sen.lock().await.send(Message::Text(format!("Failed generate instance in `{location}`."))).await.unwrap();
+                arc_sen.lock().await.send(Message::Text("Failed generate instance.".to_string())).await.unwrap();
                 return;
             };
             instance
