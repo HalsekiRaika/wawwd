@@ -16,6 +16,7 @@ use kernel::{
     repository::{DependOnInstanceRepository, DependOnLocationRepository, InstanceRepository},
 };
 use orbital::export_service;
+use kernel::repository::LocationRepository;
 
 
 #[async_trait]
@@ -56,9 +57,18 @@ pub trait CreateRingService:
             self.create_instance_service().create(instance).await?
         };
 
+        let location = LocationId::new(location);
+
+        let Some(_) = self.location_repository().find_by_id(&location).await? else {
+            return Err(ApplicationError::NotFound {
+                method: "CreateRingService::create",
+                entity: "Location",
+                target: location.to_string(),
+            });
+        };
+
         let id = RingId::default();
         let pos = Position::new(longitude, latitude)?;
-        let location = LocationId::new(location);
         let index = Index::new(indexed)?;
         let hue = HueColor::new(hue);
         let address = UserId::new(user);
