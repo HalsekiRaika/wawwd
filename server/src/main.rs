@@ -4,7 +4,7 @@ use axum::{Router, Server};
 use server::middleware::simple_auth;
 use server::{routes, AppHandler};
 use std::net::SocketAddr;
-use tower_http::{cors::{CorsLayer, Any}, trace::TraceLayer};
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::Layer;
@@ -33,7 +33,7 @@ async fn main() -> anyhow::Result<()> {
 
     let handler = AppHandler::init().await?;
 
-    let cors = CorsLayer::permissive()
+    let cors = CorsLayer::permissive();
 
     let admin = Router::new()
         .route(
