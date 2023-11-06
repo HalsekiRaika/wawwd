@@ -58,3 +58,26 @@ impl From<DriverError> for KernelError {
         }
     }
 }
+
+
+#[derive(Debug)]
+pub struct DriverErrorKind {
+    pub kind: &'static str,
+    pub error: DriverError,
+}
+
+impl DriverErrorKind {
+    pub fn new(kind: &'static str, error: DriverError) -> Self {
+        Self { kind, error }
+    }
+}
+
+impl From<DriverError> for DriverErrorKind {
+    fn from(value: DriverError) -> Self {
+        match value {
+            DriverError::Kernel(_) => Self::new("kernel", value),
+            DriverError::Decoding { .. } => Self::new("decoding", value),
+            _ => Self::new("database", value),
+        }
+    }
+}

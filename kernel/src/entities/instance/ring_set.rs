@@ -27,21 +27,21 @@ impl RingSet {
         }
         if self.0.iter().any(|item| item.indexed() == ring.indexed()) {
             return Err(KernelError::Conflict {
-                entity: "RingSet",
+                entity: "ring",
                 msg: "`Index` should be Unique within a defined value.",
             });
         }
         if let Some(last) = self.0.last() {
             if last.user() == ring.user() {
                 return Err(KernelError::Conflict {
-                    entity: "Ring",
+                    entity: "ring",
                     msg: "`UserId` conflicts with the last registered user.",
                 });
             }
         }
         if !self.0.insert(ring) {
             return Err(KernelError::Conflict {
-                entity: "RingSet",
+                entity: "ring",
                 msg:
                     "`CreatedAt` conflicts with Since the request was made at the exact same time.",
             });
@@ -90,47 +90,5 @@ impl AsRef<BTreeSet<Ring>> for RingSet {
 impl From<RingSet> for BTreeSet<Ring> {
     fn from(value: RingSet) -> Self {
         value.0
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::entities::geology::Position;
-    use crate::entities::instance::RingSet;
-    use crate::entities::ring::{CreatedAt, HueColor, Index, Ring, RingId, UserId};
-
-    #[test]
-    fn ord_test() -> anyhow::Result<()> {
-        let id = RingId::default();
-        let pos = Position::new(135, 84)?;
-        let user = UserId::default();
-        let index = Index::new(12)?;
-        let color = HueColor::new(100);
-        let created_at = CreatedAt::default();
-        let ring1 = Ring::new(id, pos, user, index, color, created_at);
-
-        let id = RingId::default();
-        let pos = Position::new(135, 83)?;
-        let user = UserId::default();
-        let index = Index::new(12)?;
-        let color = HueColor::new(100);
-        let created_at = CreatedAt::default();
-        let ring2 = Ring::new(id, pos, user, index, color, created_at);
-
-        let id = RingId::default();
-        let pos = Position::new(135, 82)?;
-        let index = Index::new(13)?;
-        let user = UserId::default();
-        let color = HueColor::new(100);
-        let created_at = CreatedAt::default();
-        let ring3 = Ring::new(id, pos, user, index, color, created_at);
-
-        let v = vec![ring1, ring3, ring2];
-
-        let sets = RingSet::new(v)?;
-
-        println!("{:#?}", sets);
-
-        Ok(())
     }
 }

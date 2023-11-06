@@ -62,7 +62,7 @@ pub trait CreateRingService:
         let Some(_) = self.location_repository().find_by_id(&location).await? else {
             return Err(ApplicationError::NotFound {
                 method: "CreateRingService::create",
-                entity: "Location",
+                entity: "location",
                 target: location.to_string(),
             });
         };

@@ -1,9 +1,10 @@
-use kernel::error::KernelError;
+use std::fmt::{Display, Formatter};
+use kernel::error::{KernelError, KernelErrorKind};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApplicationError {
-    #[error("From Kernel: {0}")]
-    Kernel(anyhow::Error),
+    #[error(transparent)]
+    Kernel(KernelErrorKind),
     #[error("cannot find `{entity}:{target}` in the following {method}.")]
     NotFound {
         entity: &'static str,
@@ -17,13 +18,39 @@ pub enum ApplicationError {
 impl From<KernelError> for ApplicationError {
     fn from(value: KernelError) -> Self {
         match value {
-            KernelError::Validation { .. }
-            | KernelError::TryConversion { .. }
-            | KernelError::UnSupportedTypeConversion { .. }
-            | KernelError::Conflict { .. }
-            | KernelError::InvalidFormat { .. } => Self::Kernel(anyhow::Error::new(value)),
             KernelError::Driver(e) => Self::Other(e),
-            KernelError::Internal(e) => Self::Other(e),
+            _ => Self::Kernel(value.into()),
+        }
+    }
+}
+
+
+#[derive(Debug)]
+pub struct ApplicationErrorKind {
+    pub kind: String,
+    pub error: ApplicationError,
+}
+
+impl ApplicationErrorKind {
+    pub fn new(kind: impl Into<String>, error: ApplicationError) -> Self {
+        Self { kind: kind.into(), error }
+    }
+}
+
+impl Display for ApplicationErrorKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}", self.kind, self.error)
+    }
+}
+
+impl std::error::Error for ApplicationErrorKind {}
+
+impl From<ApplicationError> for ApplicationErrorKind {
+    fn from(value: ApplicationError) -> Self {
+        match value {
+            ApplicationError::Kernel(_) => Self::new("kernel", value),
+            ApplicationError::NotFound { entity, .. } => Self::new(format!("not_found_{}", entity), value),
+            ApplicationError::Other(_) => Self::new("driver", value),
         }
     }
 }
