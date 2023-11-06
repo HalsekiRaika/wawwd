@@ -33,11 +33,7 @@ async fn main() -> anyhow::Result<()> {
 
     let handler = AppHandler::init().await?;
 
-    let cors = CorsLayer::new()
-        .allow_methods(Any)
-        .allow_headers(Any)
-        .allow_origin(Any);
-
+    let cors = CorsLayer::permissive()
 
     let admin = Router::new()
         .route(
