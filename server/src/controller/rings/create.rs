@@ -47,6 +47,7 @@ impl Exhaust<RingDto> for RingDtoToDetailResponseJson {
             hue: input.hue,
             user: input.user,
             created_at: input.created_at,
+            nonce: None
         }
     }
 }
@@ -61,6 +62,14 @@ pub struct CreateRingRequest {
     pub user: Uuid,
     #[serde(with = "kernel::external::time::serde::iso8601")]
     pub created_at: OffsetDateTime,
+}
+
+#[derive(Deserialize)]
+pub struct CreateRingRequestWithNonce {
+    #[serde(flatten)]
+    pub req: CreateRingRequest,
+    #[serde(default)]
+    pub nonce: Option<Uuid>
 }
 
 #[derive(Serialize)]
@@ -80,4 +89,6 @@ pub struct RingDetailResponse {
     user: Uuid,
     #[serde(with = "kernel::external::time::serde::iso8601")]
     created_at: OffsetDateTime,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nonce: Option<Uuid>
 }
