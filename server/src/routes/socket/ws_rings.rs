@@ -5,6 +5,7 @@ use axum::headers::UserAgent;
 use axum::response::Response;
 use axum::TypedHeader;
 use std::net::SocketAddr;
+use kernel::external::uuid::Uuid;
 use crate::AppHandler;
 
 pub async fn ws_handler(
@@ -24,6 +25,6 @@ pub async fn ws_handler(
     ws.on_failed_upgrade(|e| {
         tracing::error!("Failed to upgrade websocket: {}", e);
     }).on_upgrade(move |socket| async move {
-        internal::handle(socket, info, handler).await;
+        internal::handle(socket, info, handler, Uuid::new_v4()).await;
     })
 }

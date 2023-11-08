@@ -8,6 +8,7 @@ use tokio::sync::broadcast::{self, Sender};
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 use application::services::{DependOnCreateEmptyInstanceService, DependOnCreateRingService};
+use kernel::external::uuid::Uuid;
 use kernel::repository::{DependOnInstanceRepository, InstanceRepository};
 use crate::AppHandler;
 use crate::controller::{Controller, CreateRingRequestWithNonce, InstanceToDetailResponse, MaybeInstanceToDetailResponse, RequestToCreateRingDto, RingDtoToDetailResponseJson};
@@ -15,7 +16,8 @@ use crate::controller::{Controller, CreateRingRequestWithNonce, InstanceToDetail
 static BROADCAST: Lazy<Sender<String>> = Lazy::new(|| broadcast::channel(10).0);
 
 #[allow(unused_mut)]
-pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler) {
+#[tracing::instrument(fields(ctx = %ctx), skip(socket, who, handler))]
+pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler, ctx: Uuid) {
     let (mut sen, mut rec) = socket.split();
     let arc_sen = Arc::new(Mutex::new(sen));
 
@@ -37,7 +39,8 @@ pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler)
             else {
                 let e = serde_json::to_string(&serde_json::json!({
                     "error": "instance_generate",
-                    "reason": "Failed generate instance."
+                    "reason": "Failed generate instance.",
+                    "context_id": &ctx
                 })).unwrap();
                 arc_sen.lock().await.send(Message::Text(e)).await.unwrap();
                 return;
@@ -61,6 +64,8 @@ pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler)
     let mut tx1 = Arc::clone(&arc_sen);
     let handler_recv = handler.clone();
     let mut recv_task: JoinHandle<()> = tokio::spawn(async move {
+        let span = tracing::span!(tracing::Level::DEBUG, "ws-receive", ctx = %ctx);
+        let _span = span.enter();
         while let Some(Ok(msg)) = rec.next().await {
             if let Message::Text(msg) = msg {
                 tracing::debug!("`{who}` sent: {:?}", msg);
@@ -83,9 +88,10 @@ pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler)
                         tracing::error!("`{who}` sent conflict data: {:?}", e);
                         let e = e.to_string();
                         let e = serde_json::to_string(&serde_json::json!({
-                        "error": "conflict",
-                        "reason": e
-                    })).unwrap();
+                            "error": "conflict",
+                            "reason": e,
+                            "context_id": &ctx
+                        })).unwrap();
                         let _ = tx1.lock().await.send(Message::Text(e)).await;
                         continue;
                     }
