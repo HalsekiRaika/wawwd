@@ -63,14 +63,14 @@ pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler,
 
     let mut tx1 = Arc::clone(&arc_sen);
     let handler_recv = handler.clone();
+    let ctx = ctx;
     let mut recv_task: JoinHandle<()> = tokio::spawn(async move {
-        let span = tracing::span!(tracing::Level::DEBUG, "ws-receive", ctx = %ctx);
-        let _span = span.enter();
+        tracing::info!(ctx = %ctx, "`{who}` connected.",);
         while let Some(Ok(msg)) = rec.next().await {
             if let Message::Text(msg) = msg {
-                tracing::debug!("`{who}` sent: {:?}", msg);
+                tracing::debug!(ctx = %ctx, "`{who}` sent: {:?}", msg);
                 let Ok(deserialized) = serde_json::from_str::<CreateRingRequestWithNonce>(&msg) else {
-                    tracing::error!("`{who}` sent invalid JSON: {:?}", msg);
+                    tracing::error!(ctx = %ctx, "`{who}` sent invalid JSON: {:?}", msg);
                     let _ = tx1.lock().await.send(Message::Text("Invalid JSON".to_string())).await;
                     continue;
                 };
@@ -114,13 +114,13 @@ pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler,
                         break;
                     }
                     None => {
-                        tracing::warn!("`{}` somehow sent close message without CloseFrame", who);
+                        tracing::warn!(ctx = %ctx, "`{}` somehow sent close message without CloseFrame", who);
                         break;
                     }
                 }
             }
         }
-        tracing::debug!("`{who}` lost connection.",);
+        tracing::debug!(ctx = %ctx, "`{who}` lost connection.",);
     });
 
 
@@ -137,5 +137,5 @@ pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler,
         _ = (&mut recv_task) => send_task.abort(),
     }
 
-    tracing::debug!("`{}` disconnected", who);
+    tracing::debug!(ctx = %ctx, "`{}` disconnected", who);
 }
