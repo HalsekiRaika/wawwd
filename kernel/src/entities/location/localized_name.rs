@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::entities::image::AsTraitType;
 
 #[derive(Debug, Clone, Hash, Serialize, Deserialize)]
 pub struct LocalizeName(String);
@@ -18,5 +19,11 @@ impl AsRef<str> for LocalizeName {
 impl From<LocalizeName> for String {
     fn from(value: LocalizeName) -> Self {
         value.0
+    }
+}
+
+impl AsTraitType for LocalizeName {
+    fn as_trait_type(&self) -> &str {
+        "location"
     }
 }

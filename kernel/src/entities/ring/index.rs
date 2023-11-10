@@ -1,5 +1,6 @@
 use crate::error::KernelError;
 use serde::{Deserialize, Serialize};
+use crate::entities::image::AsTraitType;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Deserialize, Serialize)]
 pub struct Index(i32);
@@ -25,5 +26,11 @@ impl From<Index> for i32 {
 impl AsRef<i32> for Index {
     fn as_ref(&self) -> &i32 {
         &self.0
+    }
+}
+
+impl AsTraitType for Index {
+    fn as_trait_type(&self) -> &str {
+        "index"
     }
 }

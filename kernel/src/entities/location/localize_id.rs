@@ -16,6 +16,10 @@ impl LocalizeId {
 
         Ok(Self(id))
     }
+    
+    pub fn unchecked_new(id: impl Into<String>) -> LocalizeId {
+        Self(id.into())
+    }
 }
 
 impl AsRef<str> for LocalizeId {

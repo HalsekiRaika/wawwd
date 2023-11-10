@@ -1,6 +1,11 @@
 mod binary;
+mod metadata;
+mod trait_tag;
 
 pub use self::binary::*;
+pub use self::metadata::*;
+pub use self::trait_tag::*;
+
 use destructure::Destructure;
 use serde::{Deserialize, Serialize};
 

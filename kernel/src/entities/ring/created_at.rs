@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use time::format_description::well_known::Iso8601;
 use time::OffsetDateTime;
+use crate::entities::image::AsTraitType;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Deserialize, Serialize)]
 pub struct CreatedAt(#[serde(with = "time::serde::iso8601")] OffsetDateTime);
@@ -52,5 +53,11 @@ impl Display for CreatedAt {
                 ))
                 .map_err(|_| std::fmt::Error)?
         )
+    }
+}
+
+impl AsTraitType for CreatedAt {
+    fn as_trait_type(&self) -> &str {
+        "creation_date"
     }
 }

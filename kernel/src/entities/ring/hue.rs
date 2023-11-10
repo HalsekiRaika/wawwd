@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::entities::image::AsTraitType;
 
 #[derive(Debug, Copy, Clone, Deserialize, Serialize)]
 pub struct HueColor(i32);
@@ -20,5 +21,11 @@ impl AsRef<i32> for HueColor {
 impl From<HueColor> for i32 {
     fn from(value: HueColor) -> Self {
         value.0
+    }
+}
+
+impl AsTraitType for HueColor {
+    fn as_trait_type(&self) -> &str {
+        "color"
     }
 }
