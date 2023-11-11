@@ -6,7 +6,7 @@ use futures::{SinkExt, StreamExt};
 use once_cell::sync::Lazy;
 use tokio::sync::broadcast::{self, Sender};
 use tokio::sync::Mutex;
-use tokio::task::JoinHandle;
+use tracing::Instrument;
 use application::services::{DependOnCreateEmptyInstanceService, DependOnCreateRingService};
 use kernel::external::uuid::Uuid;
 use kernel::repository::{DependOnInstanceRepository, InstanceRepository};
@@ -15,15 +15,14 @@ use crate::controller::{Controller, CreateRingRequestWithNonce, InstanceToDetail
 
 static BROADCAST: Lazy<Sender<String>> = Lazy::new(|| broadcast::channel(10).0);
 
-#[allow(unused_mut)]
-#[tracing::instrument(fields(ctx = %ctx), skip(socket, who, handler))]
-pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler, ctx: Uuid) {
-    let (mut sen, mut rec) = socket.split();
+pub async fn handle(socket: WebSocket, who: SocketAddr, handler: AppHandler, ctx: Uuid) {
+    let (sen, mut rec) = socket.split();
     let arc_sen = Arc::new(Mutex::new(sen));
 
     let handler_once = handler.clone();
     let instance = match Controller::new((), MaybeInstanceToDetailResponse)
         .bypass(|| async move { handler_once.as_ref().instance_repository().find_unfinished().await })
+        .instrument(tracing::debug_span!("initialize", ctx = %ctx))
         .await
     {
         Ok(Some(res)) => res,
@@ -59,18 +58,16 @@ pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler,
         .unwrap();
 
     let mut brx = BROADCAST.subscribe();
-    let mut btx = BROADCAST.clone();
+    let btx = BROADCAST.clone();
 
-    let mut tx1 = Arc::clone(&arc_sen);
+    let tx1 = Arc::clone(&arc_sen);
     let handler_recv = handler.clone();
-    let ctx = ctx;
-    let mut recv_task: JoinHandle<()> = tokio::spawn(async move {
-        tracing::info!(ctx = %ctx, "`{who}` connected.",);
+    let mut recv_task = tokio::spawn(async move {
         while let Some(Ok(msg)) = rec.next().await {
             if let Message::Text(msg) = msg {
-                tracing::debug!(ctx = %ctx, "`{who}` sent: {:?}", msg);
+                tracing::debug!("`{who}` sent: {:?}", msg);
                 let Ok(deserialized) = serde_json::from_str::<CreateRingRequestWithNonce>(&msg) else {
-                    tracing::error!(ctx = %ctx, "`{who}` sent invalid JSON: {:?}", msg);
+                    tracing::error!("`{who}` sent invalid JSON: {:?}", msg);
                     let _ = tx1.lock().await.send(Message::Text("Invalid JSON".to_string())).await;
                     continue;
                 };
@@ -85,10 +82,10 @@ pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler,
                 {
                     Ok(res) => res,
                     Err(e) => {
-                        tracing::error!("`{who}` sent conflict data: {:?}", e);
+                        tracing::error!("`{who}` sent invalid data: {:?}", e);
                         let e = e.to_string();
                         let e = serde_json::to_string(&serde_json::json!({
-                            "error": "conflict",
+                            "error": "invalid_data",
                             "reason": e,
                             "context_id": &ctx
                         })).unwrap();
@@ -114,28 +111,29 @@ pub async fn handle(mut socket: WebSocket, who: SocketAddr, handler: AppHandler,
                         break;
                     }
                     None => {
-                        tracing::warn!(ctx = %ctx, "`{}` somehow sent close message without CloseFrame", who);
+                        tracing::warn!("`{}` somehow sent close message without CloseFrame", who);
                         break;
                     }
                 }
             }
         }
-        tracing::debug!(ctx = %ctx, "`{who}` lost connection.",);
-    });
+        tracing::debug!("`{who}` lost connection.",);
+    }.instrument(tracing::debug_span!("recv_task", ctx = %ctx)));
 
 
-    let mut send_task: JoinHandle<()> = tokio::spawn(async move {
+    let mut send_task = tokio::spawn(async move {
         while let Ok(msg) = brx.recv().await {
             if arc_sen.lock().await.send(Message::Text(msg)).await.is_err() {
+                tracing::error!("abort task failed to send message.");
                 break;
             }
         }
-    });
+    }.instrument(tracing::debug_span!("send_task", ctx = %ctx)));
 
     tokio::select! {
         _ = (&mut send_task) => recv_task.abort(),
         _ = (&mut recv_task) => send_task.abort(),
     }
 
-    tracing::debug!(ctx = %ctx, "`{}` disconnected", who);
+    tracing::debug!("`{}` disconnected", who);
 }

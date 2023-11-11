@@ -25,6 +25,8 @@ pub async fn ws_handler(
     ws.on_failed_upgrade(|e| {
         tracing::error!("Failed to upgrade websocket: {}", e);
     }).on_upgrade(move |socket| async move {
-        internal::handle(socket, info, handler, Uuid::new_v4()).await;
+        let ctx = Uuid::new_v4();
+        tracing::info!("`{user_agent}` at {info} websocket upgrade successfully. (context_id: {ctx})");
+        internal::handle(socket, info, handler, ctx).await;
     })
 }
